@@ -1,4 +1,4 @@
-from typing import Dict, Type, Optional
+from typing import Type, Optional
 from datetime import datetime
 from ..base import BaseAgent
 from ...models.state import BookState

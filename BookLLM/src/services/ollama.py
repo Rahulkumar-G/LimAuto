@@ -2,9 +2,7 @@ import subprocess
 import json
 import time
 from typing import Dict, Any, Optional, Tuple
-from pathlib import Path
 from ..utils.logger import get_logger
-from ..models import ModelConfig, SystemConfig
 
 class OllamaService:
     """Service for managing Ollama LLM interactions"""
