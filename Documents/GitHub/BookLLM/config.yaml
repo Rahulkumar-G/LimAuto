@@ -1,0 +1,33 @@
+# Model configuration for Llama2 8B
+model:
+  name: "llama3.1:8b"  # Use the specific model name as defined in Ollama
+  temperature: 0.7   # Conservative temperature for more stable output
+  max_tokens: 8192   # Context window for Llama2 8B
+  top_p: 0.9        # Nucleus sampling parameter
+  repeat_penalty: 1.1
+  timeout: 240      # Increased timeout for larger model processing
+
+# System configuration
+system:
+  output_dir: "./book_output"
+  log_level: "INFO"
+  max_retries: 3
+  retry_delay: 2.0
+  parallel_agents: true
+  max_workers: 1    # Reduced workers for 8B model to prevent OOM
+  save_intermediates: true
+  backup_frequency: 5
+
+# Resource management for 8B model
+resources:
+  num_ctx: 8192     # Context size
+  num_thread: 4     # CPU threads
+  num_gpu: 1        # Number of GPUs
+  num_batch: 256    # Batch size for processing
+  gpu_memory: 12000  # GPU memory limit in MB
+
+# Optional cost tracking (local deployment)
+cost:
+  cost_per_input_token: 0.0
+  cost_per_output_token: 0.0
+  cost_per_request: 0.0
