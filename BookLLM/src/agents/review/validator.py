@@ -1,6 +1,5 @@
 from typing import Dict, List, Any
 from ...models.state import BookState
-from ..base import BaseAgent
 from ...utils.logger import get_logger
 
 class ContentValidator:
@@ -51,8 +50,6 @@ class ContentValidator:
 
     async def _check_plagiarism(self, state: BookState) -> Dict[str, Any]:
         """Check content for potential plagiarism"""
-        all_content = " ".join(state.chapter_map.values())
-        
         # Implement actual plagiarism detection here
         # This is a placeholder implementation
         return {

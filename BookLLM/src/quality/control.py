@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 from ..agents.review import ContentValidator, ProofreaderAgent
 from ..models.state import BookState
 from .metrics import QualityMetrics

@@ -59,7 +59,7 @@ class OutlineAgent(BaseAgent):
             else:
                 try:
                     processed_list.append(str(item))
-                except:
+                except Exception:
                     continue
         return processed_list
     
