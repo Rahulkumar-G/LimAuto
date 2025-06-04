@@ -1,6 +1,7 @@
-from src.core import BookOrchestrator
+from .core import BookOrchestrator
 from pathlib import Path
 import argparse
+import yaml
 
 def main():
     """CLI entry point"""
@@ -15,13 +16,31 @@ def main():
     args = parser.parse_args()
 
     # Create output directory
-    Path("book_output").mkdir(exist_ok=True)
+    output_dir = Path("book_output")
+    output_dir.mkdir(exist_ok=True)
+
+    # Load config if provided, otherwise use default config
+    default_config = {
+        'model': {
+            'name': 'gpt-4',
+            'temperature': 0.7,
+            'max_tokens': 2000
+        },
+        'system': {
+            'output_dir': str(output_dir)
+        }
+    }
+
+    if args.config:
+        with open(args.config, 'r') as f:
+            user_config = yaml.safe_load(f)
+            # Merge user config with default config
+            default_config.update(user_config)
     
-    # Initialize orchestrator
-    orchestrator = BookOrchestrator(args.config)
+    # Initialize orchestrator with merged config
+    orchestrator = BookOrchestrator(default_config)
     
     try:
-        # Changed from write_book to generate_book
         orchestrator.generate_book(
             topic=args.topic,
             target_audience=args.audience,
@@ -31,7 +50,7 @@ def main():
         )
 
         print("\n✅ Book generation completed!")
-        print(f"📚 Files saved in: {orchestrator.config['system'].output_dir}")
+        print(f"📚 Files saved in: {output_dir}")
         
     except Exception as e:
         print(f"❌ Error generating book: {e}")
