@@ -1,4 +1,3 @@
-from typing import Dict, Any
 from ...base import BaseAgent
 from ....models.state import BookState
 from ....models.agent_type import AgentType

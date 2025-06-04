@@ -1,12 +1,8 @@
 from typing import Dict, Any, Optional, Tuple
-from pathlib import Path
-import json
 import subprocess
 import asyncio
 import tiktoken
 import time
-from datetime import datetime
-import logging
 from ..models.config import TokenMetrics
 from ..models.config import ModelConfig, CostConfig, SystemConfig
 from ..utils.logger import get_logger
@@ -22,7 +18,7 @@ class LLMInterface:
         
         try:
             self.encoding = tiktoken.encoding_for_model("gpt-4")
-        except:
+        except Exception:
             self.encoding = tiktoken.get_encoding("cl100k_base")
             
         if not self._verify_setup():
@@ -129,7 +125,7 @@ class EnhancedLLMInterface(LLMInterface):
                 self.logger.error(f"Attempt {attempt + 1} failed: {str(e)}")
                 if attempt == self.system_config.max_retries - 1:
                     raise
-                time.sleep(self.system_config.retry_delay * (2 ** attempt))
+                await asyncio.sleep(self.system_config.retry_delay * (2 ** attempt))
         
         # This part should ideally not be reached if max_retries > 0
         raise RuntimeError("LLM call failed after all retries.")
@@ -181,7 +177,7 @@ class EnhancedLLMInterface(LLMInterface):
                 self.logger.error(f"Attempt {attempt + 1} failed: {str(e)}")
                 if attempt == self.system_config.max_retries - 1:
                     raise
-                await asyncio.sleep(self.system_config.retry_delay * (2 ** attempt))
+                time.sleep(self.system_config.retry_delay * (2 ** attempt))
         
         # This part should ideally not be reached if max_retries > 0
         raise RuntimeError("LLM call failed after all retries.")

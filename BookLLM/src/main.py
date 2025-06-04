@@ -22,15 +22,15 @@ def main():
     
     try:
         # Changed from write_book to generate_book
-        final_state = orchestrator.generate_book(
+        orchestrator.generate_book(
             topic=args.topic,
             target_audience=args.audience,
             style=args.style,
             pages=args.pages,
             language=args.lang
         )
-        
-        print(f"\n✅ Book generation completed!")
+
+        print("\n✅ Book generation completed!")
         print(f"📚 Files saved in: {orchestrator.config['system'].output_dir}")
         
     except Exception as e:
