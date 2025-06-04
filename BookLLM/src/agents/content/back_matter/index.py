@@ -1,3 +1,4 @@
+from typing import List
 from ...base import BaseAgent
 from ....models.state import BookState
 from ....models.agent_type import AgentType

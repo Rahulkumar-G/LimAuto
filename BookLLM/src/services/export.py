@@ -1,6 +1,6 @@
 import subprocess
 from pathlib import Path
-from typing import List, Dict, Any, Optional
+from typing import List, Dict
 from datetime import datetime
 from ..utils.logger import get_logger
 from ..models.state import BookState

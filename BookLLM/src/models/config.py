@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
 from enum import Enum
-from typing import Optional
 
 @dataclass
 class ModelConfig:

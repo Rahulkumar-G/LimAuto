@@ -1,7 +1,6 @@
 from typing import Dict, List
 from ...models.state import BookState
 from ..base import BaseAgent
-from ...utils.logger import get_logger
 
 class ProofreaderAgent(BaseAgent):
     """Enhanced proofreading agent for content refinement"""

@@ -1,7 +1,4 @@
-import math
-import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from typing import Dict
 from ..base import BaseAgent
 from ...models.state import BookState
 from ...models.agent_type import AgentType
@@ -99,7 +96,7 @@ class ChapterWriterAgent(BaseAgent):
     
     def _get_previous_chapters_context(self, state: BookState, current_index: int) -> str:
         """Get context from previous chapters"""
-        return "\n".join([
-            f"Chapter {i+1}: {ch_title} - {state.chapter_summaries.get(ch_title, 'No summary')}" 
+        return "\n".join(
+            f"Chapter {i+1}: {ch_title} - {state.chapter_summaries.get(ch_title, 'No summary')}"
             for i, ch_title in enumerate(state.chapters[:current_index])
-        ])
+        )
