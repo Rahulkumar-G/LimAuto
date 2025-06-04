@@ -13,11 +13,20 @@ from ..utils.logger import get_logger
 
 class BookOrchestrator:
     """Main orchestrator for book generation process"""
-    
-    def __init__(self, config_path: Optional[str] = None):
-        self.config = self._load_config(config_path)
-        self.llm = EnhancedLLMInterface(self.config)
+
+    def __init__(self, config: Optional[Any] = None):
+        """Initialize the orchestrator.
+
+        Parameters
+        ----------
+        config: str | dict | None
+            Either a path to a YAML configuration file or a pre-loaded
+            configuration dictionary. When ``None`` default configuration
+            values are used.
+        """
         self.logger = get_logger(__name__)
+        self.config = self._load_config(config)
+        self.llm = EnhancedLLMInterface(self.config)
         self.graph = BookGraph(self.llm).build()
         self.workflow = BookWorkflow()
         
@@ -46,21 +55,29 @@ class BookOrchestrator:
             self.logger.error(f"Book generation failed: {e}")
             raise
     
-    def _load_config(self, config_path: Optional[str]) -> Dict[str, Any]:
-        """Load configuration from file"""
+    def _load_config(self, config: Optional[Any]) -> Dict[str, Any]:
+        """Load configuration from a dict or file path."""
         default_config = {
-            'model': ModelConfig(),
-            'system': SystemConfig()
+            "model": ModelConfig().__dict__,
+            "system": SystemConfig().__dict__,
         }
-        
-        if config_path:
+
+        if config:
             try:
-                with open(config_path) as f:
-                    user_config = yaml.safe_load(f)
+                if isinstance(config, (str, Path)):
+                    with open(config) as f:
+                        user_config = yaml.safe_load(f) or {}
+                elif isinstance(config, dict):
+                    user_config = config
+                else:
+                    raise TypeError(
+                        "config must be a path to a YAML file or a dictionary"
+                    )
                 default_config.update(user_config)
             except Exception as e:
+                # logger is available because __init__ sets it before this call
                 self.logger.warning(f"Failed to load config: {e}")
-        
+
         return default_config
     
     def _create_initial_state(self, topic: str, **kwargs) -> BookState:
