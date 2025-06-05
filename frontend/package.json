@@ -1,0 +1,14 @@
+{
+  "name": "log-viewer",
+  "version": "1.0.0",
+  "private": true,
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-window": "^1.8.7"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.4",
+    "typescript": "^5.4.2"
+  }
+}
