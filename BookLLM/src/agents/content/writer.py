@@ -1,5 +1,6 @@
 from datetime import datetime
 from typing import Optional, Type
+import importlib
 
 from ...models.agent_type import AgentType
 from ...models.state import BookState
@@ -49,11 +50,14 @@ class WriterAgent(BaseAgent):
     def _get_agent_class(self, agent_name: str) -> Optional[Type[BaseAgent]]:
         """Get agent class by name"""
         try:
-            # Import front matter agents dynamically
-            module = __import__(
-                f"src.agents.content.front_matter.{agent_name.lower()}",
-                fromlist=[agent_name],
-            )
+            # Import front matter agents dynamically using the package path of
+            # this module. When executed with ``python -m BookLLM.src.main`` the
+            # project is namespaced under ``BookLLM`` so there is no top-level
+            # ``src`` package. ``__package__`` resolves to ``BookLLM.src.agents.content``
+            # which ensures the dynamic import works regardless of how the
+            # project is executed.
+            module_name = f"{__package__}.front_matter.{agent_name.lower()}"
+            module = importlib.import_module(module_name)
             return getattr(module, agent_name)
         except (ImportError, AttributeError) as e:
             self.logger.warning(f"Failed to load agent {agent_name}: {e}")
