@@ -1,0 +1,6 @@
+agent_name,input_size,run_time_seconds
+OutlineAgent,500,0.0009339259999876504
+WriterAgent,5,0.008914661000005708
+ChapterWriterAgent,5,0.002610764000024801
+GlossaryAgent,15,0.0004918249999832369
+CodeSampleAgent,1,0.0004543250000210719
