@@ -104,3 +104,25 @@ We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines 
 ## License
 See [LICENSE](LICENSE) for license details.
 
+## Dashboard Integration
+
+An example `MetricsChartSection` component is provided in
+`dashboard/src/components/MetricsChartSection.tsx`. Embed it inside your
+dashboard grid layout to display latency and token usage charts.
+
+```jsx
+import MetricsChartSection from './dashboard/src/components/MetricsChartSection';
+
+export default function DashboardGrid() {
+  return (
+    <div className="dashboard-grid">
+      {/* other widgets */}
+      <MetricsChartSection />
+    </div>
+  );
+}
+```
+
+`MetricsChartSection` automatically requests data from `/api/metrics` but shows
+its built-in mock dataset when the request fails.
+
