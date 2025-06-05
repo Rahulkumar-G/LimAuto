@@ -1,4 +1,5 @@
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import re
 from ..base import BaseAgent
 from ...models.state import BookState
 from ...models.agent_type import AgentType
@@ -100,3 +101,41 @@ class ChapterWriterAgent(BaseAgent):
             f"Chapter {i+1}: {ch_title} - {state.chapter_summaries.get(ch_title, 'No summary')}"
             for i, ch_title in enumerate(state.chapters[:current_index])
         )
+
+    def _update_chapter_statistics(self, content: str, state: BookState) -> None:
+        """Update basic statistics for the chapter content."""
+        image_pattern = re.compile(r"!\[[^\]]*\]\([^)]*\)")
+        link_pattern = re.compile(r"(?<!!)\[[^\]]+\]\([^)]*\)")
+
+        images = len(image_pattern.findall(content))
+        links = len(link_pattern.findall(content))
+        tables = len(re.findall(r"\n\|", content))
+        code_blocks = content.count("```") // 2
+        examples = len(re.findall(r"\bexample\b", content, re.IGNORECASE))
+
+        state.total_images += images
+        state.total_references += links
+        state.total_tables += tables
+        state.total_code_blocks += code_blocks
+        state.total_examples += examples
+
+    def _create_navigation_header(self, title: str, state: BookState) -> str:
+        """Create simple navigation links between chapters."""
+        index = state.chapters.index(title)
+        prev_chapter = state.chapters[index - 1] if index > 0 else None
+        next_chapter = state.chapters[index + 1] if index + 1 < len(state.chapters) else None
+
+        parts = []
+        if prev_chapter:
+            parts.append(f"[<< {prev_chapter}](#{prev_chapter.replace(' ', '-')})")
+        parts.append(f"**{title}**")
+        if next_chapter:
+            parts.append(f"[{next_chapter} >>](#{next_chapter.replace(' ', '-')})")
+
+        return " | ".join(parts)
+
+    def _create_reading_info(self, content: str) -> str:
+        """Return an estimated reading time string for the chapter."""
+        words = len(content.split())
+        minutes = max(1, int(words / 200))
+        return f"_Estimated reading time: {minutes} minute(s)_"
