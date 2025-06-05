@@ -30,8 +30,13 @@ class BookState(BaseModel):
 
     # Content structure
     outline: List[str] = Field(default_factory=list)
+    title_page: Optional[str] = None
+    foreword: Optional[str] = None
+    dedication: Optional[str] = None
+    epigraph: Optional[str] = None
     preface: Optional[str] = None
     prologue: Optional[str] = None
+    table_of_contents: Optional[str] = None
     chapters: List[str] = Field(default_factory=list)
     chapter_map: Dict[str, str] = Field(default_factory=dict)
     chapter_summaries: Dict[str, str] = Field(default_factory=dict)
