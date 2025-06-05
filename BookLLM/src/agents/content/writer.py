@@ -56,7 +56,7 @@ class WriterAgent(BaseAgent):
             # ``src`` package. ``__package__`` resolves to ``BookLLM.src.agents.content``
             # which ensures the dynamic import works regardless of how the
             # project is executed.
-            module_base = agent_name[:-6] if agent_name.lower().endswith("agent") else agent_name
+            module_base = agent_name.removesuffix("Agent") if agent_name.lower().endswith("agent") else agent_name
             module_name = f"{__package__}.front_matter.{module_base.lower()}"
             module = importlib.import_module(module_name)
             return getattr(module, agent_name)
