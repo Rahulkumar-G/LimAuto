@@ -1,22 +1,24 @@
-from concurrent.futures import ThreadPoolExecutor, as_completed
 import re
-from ..base import BaseAgent
-from ...models.state import BookState
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from ...models.agent_type import AgentType
+from ...models.state import BookState
+from ..base import BaseAgent
+
 
 class ChapterWriterAgent(BaseAgent):
     """Handles chapter content generation"""
-    
+
     def __init__(self, llm, agent_type: AgentType = AgentType.CONTENT_CREATOR):
         super().__init__(llm, agent_type)
-    
+
     def _execute_logic(self, state: BookState) -> BookState:
         """Execute chapter writing based on configuration"""
         if self.llm.system_config.parallel_agents:
             return self._write_chapters_parallel(state)
         else:
             return self._write_chapters_sequential(state)
-    
+
     def _write_chapters_sequential(self, state: BookState) -> BookState:
         """Write chapters sequentially"""
         for i, title in enumerate(state.chapters):
@@ -24,15 +26,17 @@ class ChapterWriterAgent(BaseAgent):
             content = self._write_single_chapter(title, state, i)
             state.chapter_map[title] = content
         return state
-    
+
     def _write_chapters_parallel(self, state: BookState) -> BookState:
         """Write chapters in parallel"""
-        with ThreadPoolExecutor(max_workers=self.llm.system_config.max_workers) as executor:
+        with ThreadPoolExecutor(
+            max_workers=self.llm.system_config.max_workers
+        ) as executor:
             future_to_chapter = {
                 executor.submit(self._write_single_chapter, title, state, i): title
                 for i, title in enumerate(state.chapters)
             }
-            
+
             for future in as_completed(future_to_chapter):
                 title = future_to_chapter[future]
                 try:
@@ -43,17 +47,23 @@ class ChapterWriterAgent(BaseAgent):
                     error_msg = f"Failed to write chapter '{title}': {e}"
                     self.logger.error(error_msg)
                     state.errors.append(error_msg)
-        
+
         return state
-    
-    def _write_single_chapter(self, title: str, state: BookState, chapter_index: int) -> str:
+
+    def _write_single_chapter(
+        self, title: str, state: BookState, chapter_index: int
+    ) -> str:
         """Generate content for a single chapter"""
         previous_chapters = self._get_previous_chapters_context(state, chapter_index)
-        prompt = self._build_chapter_prompt(title, state, chapter_index, previous_chapters)
+        prompt = self._build_chapter_prompt(
+            title, state, chapter_index, previous_chapters
+        )
         content, _ = self.llm.call_llm(prompt)
         return self._post_process_chapter(content, state, title)
-    
-    def _build_chapter_prompt(self, title: str, state: BookState, chapter_index: int, previous_chapters: str) -> str:
+
+    def _build_chapter_prompt(
+        self, title: str, state: BookState, chapter_index: int, previous_chapters: str
+    ) -> str:
         """Build detailed chapter generation prompt"""
         return f"""
         Write a comprehensive chapter titled "{title}" for a book on "{state.topic}".
@@ -76,29 +86,34 @@ class ChapterWriterAgent(BaseAgent):
         Use proper Markdown formatting.
         Target Length: 3000-4000 words total
         """
-    
+
     def _post_process_chapter(self, content: str, state: BookState, title: str) -> str:
         """Post-process chapter content"""
         try:
             # Update statistics
             self._update_chapter_statistics(content, state)
-            
+
             # Add navigation
             nav_header = self._create_navigation_header(title, state)
-            
+
             # Add reading time
             reading_info = self._create_reading_info(content)
-            
+
             return f"{nav_header}\n{reading_info}\n{content}"
-            
+
         except Exception as e:
             self.logger.error(f"Error in post-processing chapter {title}: {e}")
             return content
-    
-    def _get_previous_chapters_context(self, state: BookState, current_index: int) -> str:
+
+    def _get_previous_chapters_context(
+        self, state: BookState, current_index: int
+    ) -> str:
         """Get context from previous chapters"""
         return "\n".join(
-            f"Chapter {i+1}: {ch_title} - {state.chapter_summaries.get(ch_title, 'No summary')}"
+            (
+                f"Chapter {i+1}: {ch_title} - "
+                f"{state.chapter_summaries.get(ch_title, 'No summary')}"
+            )
             for i, ch_title in enumerate(state.chapters[:current_index])
         )
 
@@ -123,7 +138,9 @@ class ChapterWriterAgent(BaseAgent):
         """Create simple navigation links between chapters."""
         index = state.chapters.index(title)
         prev_chapter = state.chapters[index - 1] if index > 0 else None
-        next_chapter = state.chapters[index + 1] if index + 1 < len(state.chapters) else None
+        next_chapter = (
+            state.chapters[index + 1] if index + 1 < len(state.chapters) else None
+        )
 
         parts = []
         if prev_chapter:

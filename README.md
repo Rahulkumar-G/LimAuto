@@ -80,6 +80,15 @@ can run:
 pytest
 ```
 
+## Static analysis
+
+Run `flake8` and `mypy` locally to check code style and types:
+
+```bash
+flake8 .
+mypy .
+```
+
 ## Repository layout
 
 - `BookLLM/` – source code and configuration

@@ -1,6 +1,6 @@
+import importlib
 from datetime import datetime
 from typing import Optional, Type
-import importlib
 
 from ...models.agent_type import AgentType
 from ...models.state import BookState
@@ -53,9 +53,9 @@ class WriterAgent(BaseAgent):
             # Import front matter agents dynamically using the package path of
             # this module. When executed with ``python -m BookLLM.src.main`` the
             # project is namespaced under ``BookLLM`` so there is no top-level
-            # ``src`` package. ``__package__`` resolves to ``BookLLM.src.agents.content``
-            # which ensures the dynamic import works regardless of how the
-            # project is executed.
+            # ``src`` package. ``__package__`` resolves to
+            # ``BookLLM.src.agents.content`` which ensures the dynamic import
+            # works regardless of how the project is executed.
             module_name = f"{__package__}.front_matter.{agent_name.lower()}"
             module = importlib.import_module(module_name)
             return getattr(module, agent_name)

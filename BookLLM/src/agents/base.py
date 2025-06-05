@@ -31,11 +31,13 @@ class BaseAgent:
             current_prompt = getattr(self, "prompt", "")
             if not current_prompt:
                 self.logger.warning(
-                    f"Agent {self.__class__.__name__} run method called with empty/missing self.prompt."
+                    "Agent %s run method called with empty/missing self.prompt.",
+                    self.__class__.__name__,
                 )
 
-            # Use acall_llm for async operations. json_mode is not directly supported by acall_llm's current Ollama flags.
-            # If JSON output is needed, it should be requested in the prompt itself.
+            # Use acall_llm for async operations. JSON mode is not directly
+            # supported by acall_llm's current Ollama flags. If JSON output is
+            # needed, request it in the prompt itself.
             response, metadata = await self.llm.acall_llm(current_prompt)
             duration = asyncio.get_event_loop().time() - start_time
 
@@ -83,7 +85,7 @@ class BaseAgent:
                 if attempt == max_retries - 1:
                     state.errors.append(f"{self.__class__.__name__}: {e}")
                     return state
-                time.sleep(delay * (2 ** attempt))
+                time.sleep(delay * (2**attempt))
 
     def _execute_logic(self, state: BookState) -> BookState:
         """Override this method in subclasses"""
