@@ -1,0 +1,17 @@
+{
+  "nodes": [
+    {"id": "outline_node", "data": {"label": "outline_node"}, "position": {"x": 0, "y": 0}},
+    {"id": "writer_node", "data": {"label": "writer_node"}, "position": {"x": 200, "y": 0}},
+    {"id": "chapter_node", "data": {"label": "chapter_node"}, "position": {"x": 400, "y": 0}},
+    {"id": "glossary_node", "data": {"label": "glossary_node"}, "position": {"x": 600, "y": 0}},
+    {"id": "code_node", "data": {"label": "code_node"}, "position": {"x": 800, "y": 0}},
+    {"id": "proofreader_node", "data": {"label": "proofreader_node"}, "position": {"x": 1000, "y": 0}}
+  ],
+  "edges": [
+    {"id": "e1", "source": "outline_node", "target": "writer_node", "label": "outline"},
+    {"id": "e2", "source": "writer_node", "target": "chapter_node", "label": "draft"},
+    {"id": "e3", "source": "chapter_node", "target": "glossary_node", "label": "chapters"},
+    {"id": "e4", "source": "glossary_node", "target": "code_node", "label": "terms"},
+    {"id": "e5", "source": "code_node", "target": "proofreader_node", "label": "examples"}
+  ]
+}
