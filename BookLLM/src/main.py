@@ -5,6 +5,9 @@ import argparse
 import logging
 import yaml
 
+from .core import BookOrchestrator
+
+
 def main():
     """CLI entry point"""
     parser = argparse.ArgumentParser(description="AI Book Writing System")
@@ -14,7 +17,7 @@ def main():
     parser.add_argument("--style", default="professional", help="Writing style")
     parser.add_argument("--pages", type=int, default=100, help="Target page count")
     parser.add_argument("--lang", default="en", help="Book language")
-    
+
     args = parser.parse_args()
 
     setup_logging(args.config or str(Path(__file__).resolve().parents[1] / "config.yaml"))
@@ -26,32 +29,26 @@ def main():
 
     # Load config if provided, otherwise use default config
     default_config = {
-        'model': {
-            'name': 'gpt-4',
-            'temperature': 0.7,
-            'max_tokens': 2000
-        },
-        'system': {
-            'output_dir': str(output_dir)
-        }
+        "model": {"name": "gpt-4", "temperature": 0.7, "max_tokens": 2000},
+        "system": {"output_dir": str(output_dir)},
     }
 
     if args.config:
-        with open(args.config, 'r') as f:
+        with open(args.config, "r") as f:
             user_config = yaml.safe_load(f)
             # Merge user config with default config
             default_config.update(user_config)
-    
+
     # Initialize orchestrator with merged config
     orchestrator = BookOrchestrator(default_config)
-    
+
     try:
         orchestrator.generate_book(
             topic=args.topic,
             target_audience=args.audience,
             style=args.style,
             pages=args.pages,
-            language=args.lang
+            language=args.lang,
         )
 
         logger.info("\n✅ Book generation completed!")
@@ -60,6 +57,7 @@ def main():
     except Exception as e:
         logger.exception("❌ Error generating book")
         exit(1)
+
 
 if __name__ == "__main__":
     main()

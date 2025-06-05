@@ -1,4 +1,4 @@
 from .logger import get_logger
-from .metrics import TokenMetricsTracker, QualityMetricsTracker
+from .metrics import QualityMetricsTracker, TokenMetricsTracker
 
-__all__ = ['get_logger', 'TokenMetricsTracker', 'QualityMetricsTracker']
+__all__ = ["get_logger", "TokenMetricsTracker", "QualityMetricsTracker"]
