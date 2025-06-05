@@ -1,6 +1,6 @@
-# LimAuto
+# LangGraphBook
 
-LimAuto is an experimental pipeline for generating technical books using a local LLM.
+LangGraphBook: An LLM-driven orchestration framework for building AI-powered books.
 It orchestrates multiple agents (writers, proofreaders, code example generators, etc.)
 through a graph defined in `BookLLM`.
 
@@ -14,21 +14,18 @@ through a graph defined in `BookLLM`.
 ## Installation
 
 1. Clone this repository.
-2. Create and activate a virtual environment (recommended):
+2. Install the package and dependencies:
 
    ```bash
-   python3 -m venv venv
-   source venv/bin/activate
+   pip install .
    ```
-3. Install the dependencies:
+
+3. Alternatively build a Docker image:
 
    ```bash
-   pip install -r requirements.txt
+   docker build -t langgraphbook .
+   docker run -p 8000:8000 langgraphbook
    ```
-
-   Some dependencies are heavy and may require additional system libraries. If
-   installation fails due to network restrictions, you can edit the requirements
-   file to remove optional packages.
 
 ## Configuration
 
@@ -41,7 +38,9 @@ Key options include:
 - `model.name` – the Ollama model to use.
 - `system.output_dir` – where generated files are saved.
 
-## Running the book generator
+## Usage
+
+### Command Line Interface
 
 Run the entry script with a topic and optional arguments:
 
@@ -56,6 +55,21 @@ python -m BookLLM.src.main "My Book Topic" \
 
 The generated book (Markdown), metadata and token metrics will be written to the
 folder specified in the configuration (default: `book_output`).
+
+### HTTP API
+
+Start the API server:
+
+```bash
+python -m BookLLM.src.api
+```
+
+Generate a book via API:
+
+```bash
+curl -X POST http://localhost:8000/generate -H "Content-Type: application/json" \
+  -d '{"topic": "My Book Topic"}'
+```
 
 ## Running tests
 
@@ -74,6 +88,11 @@ pytest
 
 Feel free to explore the source code for more details on how each agent works.
 
+## Documentation
+Comprehensive documentation lives in the [docs/](docs/) directory. If you find an issue, please report it on the [issue tracker](https://github.com/yourorg/langgraphbook/issues).
+
+## Contributing
+We welcome contributions! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on opening issues and submitting pull requests.
 
 ## License
 See [LICENSE](LICENSE) for license details.

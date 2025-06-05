@@ -2,7 +2,7 @@
 name = "bookllm"
 version = "0.1.0"
 description = "AI-powered book writing system using LangGraph"
-authors = ["Your Name <your.email@example.com>"]
+authors = ["OpenAI <openai@example.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
