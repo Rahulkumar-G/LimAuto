@@ -85,6 +85,7 @@ pytest
 - `BookLLM/` – source code and configuration
 - `tests/` – additional tests used during development
 - `requirements.txt` – Python dependencies
+- `frontend/` – React components and UI code
 
 Feel free to explore the source code for more details on how each agent works.
 
