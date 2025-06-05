@@ -9,6 +9,7 @@ from ..interfaces.llm import EnhancedLLMInterface
 from ..models.config import ModelConfig, SystemConfig
 from ..models.state import BookState
 from ..utils.logger import get_logger
+from ..utils.step_tracker import StepEvent, step_tracker
 from .graph import BookGraph
 from .workflow import BookWorkflow
 
@@ -35,21 +36,24 @@ class BookOrchestrator:
     def generate_book(self, topic: str, **kwargs) -> BookState:
         """Execute full book generation process"""
         try:
-            # Initialize state
+            # Step 1: Initialize state
             initial_state = self._create_initial_state(topic, **kwargs)
+            step_tracker.dispatch(StepEvent("Scaffolding"))
 
-            # Start workflow
+            # Step 2: Start workflow
             state = self.workflow.start(initial_state)
 
-            # Execute graph
+            # Step 3: Execute graph
             self.logger.info(f"Starting book generation for: {topic}")
             final_state = self.graph.invoke(state)
+            step_tracker.dispatch(StepEvent("Wiring API"))
 
-            # Complete workflow
+            # Step 4: Complete workflow
             final_state = self.workflow.complete(final_state)
 
-            # Save artifacts
+            # Step 5: Save artifacts
             self._save_artifacts(final_state)
+            step_tracker.dispatch(StepEvent("Styling"))
 
             return final_state
 
