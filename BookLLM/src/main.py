@@ -1,6 +1,8 @@
 from .core import BookOrchestrator
+from .logging_config import setup_logging
 from pathlib import Path
 import argparse
+import logging
 import yaml
 
 def main():
@@ -14,6 +16,9 @@ def main():
     parser.add_argument("--lang", default="en", help="Book language")
     
     args = parser.parse_args()
+
+    setup_logging(args.config or str(Path(__file__).resolve().parents[1] / "config.yaml"))
+    logger = logging.getLogger(__name__)
 
     # Create output directory
     output_dir = Path("book_output")
@@ -49,11 +54,11 @@ def main():
             language=args.lang
         )
 
-        print("\n✅ Book generation completed!")
-        print(f"📚 Files saved in: {output_dir}")
+        logger.info("\n✅ Book generation completed!")
+        logger.info(f"📚 Files saved in: {output_dir}")
         
     except Exception as e:
-        print(f"❌ Error generating book: {e}")
+        logger.exception("❌ Error generating book")
         exit(1)
 
 if __name__ == "__main__":
