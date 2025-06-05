@@ -1,13 +1,14 @@
-from ...base import BaseAgent
-from ....models.state import BookState
 from ....models.agent_type import AgentType
+from ....models.state import BookState
+from ...base import BaseAgent
+
 
 class PrefaceAgent(BaseAgent):
     """Generates compelling preface for the book"""
-    
+
     def __init__(self, llm, agent_type: AgentType = AgentType.CONTENT_CREATOR):
         super().__init__(llm, agent_type)
-    
+
     def _execute_logic(self, state: BookState) -> BookState:
         """Generate the book's preface"""
         prompt = f"""
@@ -23,6 +24,6 @@ class PrefaceAgent(BaseAgent):
         Style: {state.book_style}, engaging, and encouraging.
         Length: 300-500 words.
         """
-        
+
         state.preface, _ = self.llm.call_llm(prompt)
         return state

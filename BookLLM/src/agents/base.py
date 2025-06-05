@@ -83,7 +83,7 @@ class BaseAgent:
                 if attempt == max_retries - 1:
                     state.errors.append(f"{self.__class__.__name__}: {e}")
                     return state
-                time.sleep(delay * (2 ** attempt))
+                time.sleep(delay * (2**attempt))
 
     def _execute_logic(self, state: BookState) -> BookState:
         """Override this method in subclasses"""

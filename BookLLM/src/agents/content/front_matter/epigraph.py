@@ -1,13 +1,14 @@
-from ...base import BaseAgent
-from ....models.state import BookState
 from ....models.agent_type import AgentType
+from ....models.state import BookState
+from ...base import BaseAgent
+
 
 class EpigraphAgent(BaseAgent):
     """Generates inspiring epigraph for the book"""
-    
+
     def __init__(self, llm, agent_type: AgentType = AgentType.CONTENT_CREATOR):
         super().__init__(llm, agent_type)
-    
+
     def _execute_logic(self, state: BookState) -> BookState:
         """Generate the book's epigraph"""
         prompt = f"""
@@ -22,6 +23,6 @@ class EpigraphAgent(BaseAgent):
         
         Format as: "> Quote\n> -- Attribution"
         """
-        
+
         state.epigraph, _ = self.llm.call_llm(prompt)
         return state

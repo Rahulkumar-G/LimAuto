@@ -1,3 +1,3 @@
-from .llm import LLMInterface, EnhancedLLMInterface
+from .llm import EnhancedLLMInterface, LLMInterface
 
-__all__ = ['LLMInterface', 'EnhancedLLMInterface']
+__all__ = ["LLMInterface", "EnhancedLLMInterface"]
