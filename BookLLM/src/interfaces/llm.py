@@ -40,6 +40,14 @@ class EnhancedLLMInterface(LLMInterface):
         self.logger = get_logger(__name__) # Use consistent logger
         self.metrics = TokenMetrics()      # Initialize metrics tracking
         self._check_ollama_setup()
+
+    def _validate_prompt(self, prompt: str) -> None:
+        """Basic validation for prompts before sending to the LLM."""
+        if not prompt or not prompt.strip():
+            raise ValueError("Prompt cannot be empty")
+        token_count = self.estimate_tokens(prompt)
+        if token_count > self.model_config.max_tokens:
+            raise ValueError("Prompt exceeds max token limit")
     
     def _check_ollama_setup(self) -> bool:
         """Verify Ollama installation and model availability"""
@@ -90,6 +98,8 @@ class EnhancedLLMInterface(LLMInterface):
                 "Provide comprehensive, well-structured content."
             )
 
+        self._validate_prompt(prompt)
+
         full_prompt = f"{system_prompt}\n\n{prompt}"
         input_tokens = self.estimate_tokens(full_prompt)
         
@@ -137,6 +147,8 @@ class EnhancedLLMInterface(LLMInterface):
                 "You are a professional author and content creator. "
                 "Provide comprehensive, well-structured content."
             )
+
+        self._validate_prompt(prompt)
 
         full_prompt = f"{system_prompt}\n\n{prompt}"
         input_tokens = self.estimate_tokens(full_prompt)
