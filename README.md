@@ -88,6 +88,12 @@ pytest
 
 Feel free to explore the source code for more details on how each agent works.
 
+## Metrics dashboard
+
+The `frontend/` directory contains a small React component `MetricsPage.tsx`.
+It visualizes success vs. failure as a pie chart and shows a 24‑hour trendline
+with stacked areas using Recharts.
+
 ## Documentation
 Comprehensive documentation lives in the [docs/](docs/) directory. If you find an issue, please report it on the [issue tracker](https://github.com/yourorg/langgraphbook/issues).
 
