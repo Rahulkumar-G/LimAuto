@@ -75,10 +75,15 @@ class BookGraph:
     
     def _create_nodes(self) -> Dict[str, callable]:
         """Create graph nodes from agents"""
-        return {
-            f"{name}_node": agent._execute_logic
-            for name, agent in self.agents.items()
-        }
+        nodes = {}
+        for name, agent in self.agents.items():
+            def make_func(a):
+                def _inner(state: BookState):
+                    return a.process(state)
+                return _inner
+
+            nodes[f"{name}_node"] = make_func(agent)
+        return nodes
     
     def _define_workflow(self) -> List[str]:
         """Define the workflow sequence"""

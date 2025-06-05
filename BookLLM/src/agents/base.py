@@ -1,5 +1,6 @@
 import asyncio
 import json
+import time
 from datetime import datetime
 from typing import Any, Dict, Optional
 
@@ -60,18 +61,29 @@ class BaseAgent:
         return response
 
     def process(self, state: BookState) -> BookState:
-        """Run agent logic with error handling and logging."""
-        try:
-            self.logger.debug(f"Starting {self.__class__.__name__}")
-            result_state = self._execute_logic(state)
-            result_state.completed_steps.append(self.__class__.__name__)
-            if self.llm.system_config.save_intermediates:
-                self._save_agent_output(result_state, self.__class__.__name__)
-            return result_state
-        except Exception as e:
-            self.logger.error(f"Error in {self.__class__.__name__}: {e}", exc_info=True)
-            state.errors.append(f"{self.__class__.__name__}: {e}")
-            return state
+        """Run agent logic with retry-based healing and detailed logging."""
+        max_retries = self.llm.system_config.max_retries
+        delay = self.llm.system_config.retry_delay
+
+        for attempt in range(max_retries):
+            try:
+                self.logger.debug(
+                    f"Starting {self.__class__.__name__} (attempt {attempt + 1})"
+                )
+                result_state = self._execute_logic(state)
+                result_state.completed_steps.append(self.__class__.__name__)
+                if self.llm.system_config.save_intermediates:
+                    self._save_agent_output(result_state, self.__class__.__name__)
+                return result_state
+            except Exception as e:
+                self.logger.error(
+                    f"Error in {self.__class__.__name__} attempt {attempt + 1}: {e}",
+                    exc_info=True,
+                )
+                if attempt == max_retries - 1:
+                    state.errors.append(f"{self.__class__.__name__}: {e}")
+                    return state
+                time.sleep(delay * (2 ** attempt))
 
     def _execute_logic(self, state: BookState) -> BookState:
         """Override this method in subclasses"""
