@@ -1,5 +1,6 @@
 import json
-from typing import List
+import re
+from typing import List, Optional
 
 from ...models.agent_type import AgentType
 from ...models.state import BookState
@@ -30,13 +31,20 @@ class OutlineAgent(BaseAgent):
 
         try:
             parsed = json.loads(response)
+        except json.JSONDecodeError:
+            json_content = self._extract_json_block(response)
+            if json_content:
+                parsed = json.loads(json_content)
+            else:
+                parsed = None
+
+        if parsed is not None:
             raw_outline_data = self._extract_outline_data(parsed)
             processed_outline_list = self._process_outline_data(raw_outline_data)
 
             state.outline = processed_outline_list
             state.chapters = processed_outline_list.copy()
-
-        except json.JSONDecodeError:
+        else:
             # Fallback parsing for non-JSON responses
             state.outline = self._fallback_parsing(response)
             state.chapters = state.outline.copy()
@@ -65,7 +73,20 @@ class OutlineAgent(BaseAgent):
                     continue
         return processed_list
 
+    def _extract_json_block(self, response: str) -> Optional[str]:
+        """Attempt to extract a JSON block from an LLM response."""
+        code_block = re.search(r"```(?:json)?\n(.*?)```", response, re.DOTALL)
+        if code_block:
+            return code_block.group(1)
+        match = re.search(r"({.*})", response, re.DOTALL)
+        return match.group(1) if match else None
+
     def _fallback_parsing(self, response: str) -> List[str]:
         """Fallback parsing for non-JSON responses"""
         lines = [line.strip() for line in response.split("\n") if line.strip()]
-        return [line.lstrip("0123456789.-").strip() for line in lines if line]
+        cleaned = [
+            line
+            for line in lines
+            if not line.startswith("```") and line not in {"{", "}", "[", "]"}
+        ]
+        return [line.lstrip("0123456789.- ").strip() for line in cleaned if line]
