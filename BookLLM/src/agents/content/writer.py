@@ -1,6 +1,6 @@
+import importlib
 from datetime import datetime
 from typing import Optional, Type
-import importlib
 
 from ...models.agent_type import AgentType
 from ...models.state import BookState

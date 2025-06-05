@@ -1,5 +1,6 @@
 import typing
 
+
 def patch_forward_ref_evaluate():
     """Patch typing.ForwardRef._evaluate for pydantic v1 compatibility on Python 3.12"""
 
@@ -17,8 +18,11 @@ def patch_forward_ref_evaluate():
             raise TypeError("Unexpected arguments for ForwardRef._evaluate")
         if recursive_guard is None:
             recursive_guard = set()
-        return orig_fn(self, globalns, localns, type_params, recursive_guard=recursive_guard)
+        return orig_fn(
+            self, globalns, localns, type_params, recursive_guard=recursive_guard
+        )
 
     typing.ForwardRef._evaluate = _evaluate
+
 
 patch_forward_ref_evaluate()

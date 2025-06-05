@@ -1,21 +1,23 @@
-import subprocess
 import json
+import subprocess
 import time
-from typing import Dict, Any, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
+
 from ..utils.logger import get_logger
+
 
 class OllamaService:
     """Service for managing Ollama LLM interactions"""
-    
+
     def __init__(self):
         self.logger = get_logger(__name__)
-        
+
     async def generate(
-        self, 
-        prompt: str, 
+        self,
+        prompt: str,
         system_prompt: Optional[str] = None,
         model: str = "llama2",
-        **kwargs
+        **kwargs,
     ) -> Tuple[str, Dict[str, Any]]:
         """Generate text using Ollama"""
         if system_prompt:
@@ -23,11 +25,7 @@ class OllamaService:
         else:
             full_prompt = prompt
 
-        cmd = [
-            "ollama", "run",
-            model,
-            "--nowordwrap"
-        ]
+        cmd = ["ollama", "run", model, "--nowordwrap"]
 
         if kwargs.get("json_mode"):
             cmd.extend(["--format", "json"])
@@ -38,18 +36,16 @@ class OllamaService:
                 stdin=subprocess.PIPE,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
-                text=True
+                text=True,
             )
 
             stdout, stderr = process.communicate(
-                input=full_prompt,
-                timeout=kwargs.get("timeout", 120)
+                input=full_prompt, timeout=kwargs.get("timeout", 120)
             )
 
             if process.returncode != 0:
                 raise subprocess.CalledProcessError(
-                    process.returncode, cmd, 
-                    output=stdout, stderr=stderr
+                    process.returncode, cmd, output=stdout, stderr=stderr
                 )
 
             output = stdout.strip()
@@ -80,19 +76,11 @@ class OllamaService:
         """Verify Ollama installation and service status"""
         try:
             # Check if Ollama is installed
-            subprocess.run(
-                ["ollama", "version"],
-                capture_output=True,
-                check=True
-            )
-            
+            subprocess.run(["ollama", "version"], capture_output=True, check=True)
+
             # Check if service is running
-            subprocess.run(
-                ["ollama", "list"],
-                capture_output=True,
-                check=True
-            )
-            
+            subprocess.run(["ollama", "list"], capture_output=True, check=True)
+
             return True
         except subprocess.CalledProcessError:
             return False
@@ -101,9 +89,7 @@ class OllamaService:
         """Start Ollama service"""
         try:
             subprocess.Popen(
-                ["ollama", "serve"],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE
+                ["ollama", "serve"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
             )
             time.sleep(5)  # Wait for service to start
             return self.verify_setup()
@@ -115,9 +101,7 @@ class OllamaService:
         """Pull a model from Ollama"""
         try:
             subprocess.run(
-                ["ollama", "pull", model_name],
-                check=True,
-                capture_output=True
+                ["ollama", "pull", model_name], check=True, capture_output=True
             )
             return True
         except subprocess.CalledProcessError as e:
