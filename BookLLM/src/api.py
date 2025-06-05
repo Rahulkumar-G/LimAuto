@@ -10,6 +10,13 @@ app = Flask(__name__)
 # Default config path within the package
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.yaml"
 
+# Temporary in-memory metrics data
+METRICS_SAMPLE = [
+    {"timestamp": "00:00", "p99_latency_ms": 950, "tokens_per_minute": 210},
+    {"timestamp": "00:01", "p99_latency_ms": 1020, "tokens_per_minute": 180},
+    {"timestamp": "00:02", "p99_latency_ms": 980, "tokens_per_minute": 195},
+]
+
 
 @app.route("/generate", methods=["POST"])
 def generate_book():
@@ -26,6 +33,12 @@ def generate_book():
     orchestrator = BookOrchestrator(config)
     orchestrator.generate_book(topic=topic)
     return jsonify({"message": "Book generation completed"})
+
+
+@app.route("/api/metrics", methods=["GET"])
+def get_metrics():
+    """Return latency and token metrics."""
+    return jsonify(METRICS_SAMPLE)
 
 
 @app.route("/health", methods=["GET"])
