@@ -43,9 +43,11 @@ class StepTracker:
                 listener(event)
 
     def _display_current(self) -> None:
-        """Print a ribbon indicating the current step."""
+        """Print a ribbon indicating the current step with progress."""
         step_name = self.steps[self.current]
-        print(f"=== [StepTracker] {step_name} ===")
+        total = len(self.steps)
+        current = self.current + 1
+        print(f"=== [StepTracker] Step {current}/{total}: {step_name} ===")
 
 
 # Step 4: Create a global instance with default steps
