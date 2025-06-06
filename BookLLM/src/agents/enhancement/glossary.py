@@ -30,15 +30,47 @@ class GlossaryAgent(BaseAgent):
             # Some models may output additional text before/after the JSON. Try
             # to extract the first valid JSON object if parsing fails.
             try:
-                state.glossary = json.loads(response)
+                data = json.loads(response)
             except json.JSONDecodeError:
                 cleaned = response.strip()
                 start = cleaned.find("{")
                 end = cleaned.rfind("}")
                 if start != -1 and end != -1 and end > start:
-                    state.glossary = json.loads(cleaned[start : end + 1])
+                    data = json.loads(cleaned[start : end + 1])
                 else:
                     raise
+
+            # Normalize potential nested structures
+            glossary = {}
+            if isinstance(data, dict) and "technical_terms" in data:
+                items = data.get("technical_terms", [])
+                if isinstance(items, list):
+                    for entry in items:
+                        if isinstance(entry, dict):
+                            term = entry.get("key") or entry.get("term")
+                            definition = entry.get("value") or entry.get(
+                                "definition"
+                            )
+                            if term and definition:
+                                glossary[str(term)] = str(definition)
+            elif isinstance(data, list):
+                for entry in data:
+                    if isinstance(entry, dict):
+                        term = entry.get("key") or entry.get("term")
+                        definition = entry.get("value") or entry.get(
+                            "definition"
+                        )
+                        if term and definition:
+                            glossary[str(term)] = str(definition)
+                    elif isinstance(entry, list) and len(entry) == 2:
+                        glossary[str(entry[0])] = str(entry[1])
+            elif isinstance(data, dict):
+                glossary = {str(k): str(v) for k, v in data.items() if isinstance(v, str)}
+
+            if not glossary:
+                raise ValueError("Invalid glossary format")
+
+            state.glossary = glossary
             self.logger.info(
                 f"Generated glossary with {len(state.glossary)} terms"
             )
