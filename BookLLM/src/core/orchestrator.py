@@ -8,6 +8,7 @@ import yaml
 from ..interfaces.llm import EnhancedLLMInterface
 from ..models.config import ModelConfig, SystemConfig
 from ..models.state import BookState
+from ..services import ExportService
 from ..utils.logger import get_logger
 from ..utils.step_tracker import StepEvent, step_tracker
 from .graph import BookGraph
@@ -117,6 +118,15 @@ class BookOrchestrator:
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+        # Ensure compiled_book is available
+        if not state.compiled_book:
+            try:
+                exporter = ExportService(output_dir)
+                state.compiled_book = exporter._compile_content(state)
+            except Exception as e:
+                self.logger.error(f"Failed to compile book content: {e}")
+                state.compiled_book = ""
 
         # Save book content
         with open(output_dir / f"book_{timestamp}.md", "w") as f:
