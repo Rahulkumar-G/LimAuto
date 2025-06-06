@@ -98,7 +98,14 @@ class BookOrchestrator:
 
     def _save_artifacts(self, state: BookState):
         """Save generation artifacts"""
-        output_dir = Path(self.config["system"].output_dir)
+        system_cfg = self.config.get("system", {})
+        output_dir = (
+            system_cfg.output_dir
+            if hasattr(system_cfg, "output_dir")
+            else system_cfg.get("output_dir", "./book_output")
+        )
+        output_dir = Path(output_dir)
+        output_dir.mkdir(parents=True, exist_ok=True)
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
         # Save book content

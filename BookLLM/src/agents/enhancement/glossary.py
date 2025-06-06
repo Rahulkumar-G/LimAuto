@@ -27,8 +27,21 @@ class GlossaryAgent(BaseAgent):
 
         try:
             response, _ = self.llm.call_llm(prompt, json_mode=True)
-            state.glossary = json.loads(response)
-            self.logger.info(f"Generated glossary with {len(state.glossary)} terms")
+            # Some models may output additional text before/after the JSON. Try
+            # to extract the first valid JSON object if parsing fails.
+            try:
+                state.glossary = json.loads(response)
+            except json.JSONDecodeError:
+                cleaned = response.strip()
+                start = cleaned.find("{")
+                end = cleaned.rfind("}")
+                if start != -1 and end != -1 and end > start:
+                    state.glossary = json.loads(cleaned[start : end + 1])
+                else:
+                    raise
+            self.logger.info(
+                f"Generated glossary with {len(state.glossary)} terms"
+            )
         except Exception as e:
             self.logger.warning(f"Glossary generation failed: {e}")
             state.warnings.append(f"Glossary incomplete: {str(e)}")
