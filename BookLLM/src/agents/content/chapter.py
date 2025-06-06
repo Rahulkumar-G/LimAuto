@@ -1,5 +1,6 @@
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
+from tqdm import tqdm
 
 from ...models.agent_type import AgentType
 from ...models.state import BookState
@@ -21,10 +22,15 @@ class ChapterWriterAgent(BaseAgent):
 
     def _write_chapters_sequential(self, state: BookState) -> BookState:
         """Write chapters sequentially"""
-        for i, title in enumerate(state.chapters):
-            self.logger.info(f"Writing chapter {i+1}/{len(state.chapters)}: {title}")
-            content = self._write_single_chapter(title, state, i)
-            state.chapter_map[title] = content
+        total = len(state.chapters)
+        with tqdm(total=total, desc="Chapters", unit="chapter") as pbar:
+            for i, title in enumerate(state.chapters):
+                self.logger.info(
+                    f"Writing chapter {i + 1}/{total}: {title}"
+                )
+                content = self._write_single_chapter(title, state, i)
+                state.chapter_map[title] = content
+                pbar.update(1)
         return state
 
     def _write_chapters_parallel(self, state: BookState) -> BookState:
@@ -36,17 +42,19 @@ class ChapterWriterAgent(BaseAgent):
                 executor.submit(self._write_single_chapter, title, state, i): title
                 for i, title in enumerate(state.chapters)
             }
-
-            for future in as_completed(future_to_chapter):
-                title = future_to_chapter[future]
-                try:
-                    content = future.result()
-                    state.chapter_map[title] = content
-                    self.logger.info(f"✅ Completed chapter: {title}")
-                except Exception as e:
-                    error_msg = f"Failed to write chapter '{title}': {e}"
-                    self.logger.error(error_msg)
-                    state.errors.append(error_msg)
+            total = len(state.chapters)
+            with tqdm(total=total, desc="Chapters", unit="chapter") as pbar:
+                for future in as_completed(future_to_chapter):
+                    title = future_to_chapter[future]
+                    try:
+                        content = future.result()
+                        state.chapter_map[title] = content
+                        self.logger.info(f"✅ Completed chapter: {title}")
+                    except Exception as e:
+                        error_msg = f"Failed to write chapter '{title}': {e}"
+                        self.logger.error(error_msg)
+                        state.errors.append(error_msg)
+                    pbar.update(1)
 
         return state
 
