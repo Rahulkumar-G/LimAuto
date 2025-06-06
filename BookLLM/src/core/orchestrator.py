@@ -46,6 +46,16 @@ class BookOrchestrator:
             # Step 3: Execute graph
             self.logger.info(f"Starting book generation for: {topic}")
             final_state = self.graph.invoke(state)
+
+            # langgraph returns a mapping object, not our dataclass
+            if not isinstance(final_state, BookState):
+                try:
+                    final_state = BookState(**dict(final_state))
+                except Exception as e:
+                    self.logger.error(
+                        f"Failed to convert graph output to BookState: {e}"
+                    )
+                    raise
             step_tracker.dispatch(StepEvent("Wiring API"))
 
             # Step 4: Complete workflow
