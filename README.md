@@ -56,6 +56,11 @@ python -m BookLLM.src.main "My Book Topic" \
 The generated book (Markdown), metadata and token metrics will be written to the
 folder specified in the configuration (default: `book_output`).
 
+During generation you will see a **step tracker** showing the current phase
+(e.g. `Step 1/3: Scaffolding`) and a progress bar for chapter creation. The
+process is complete when the log prints `✅ Book generation completed!` along
+with the output directory path.
+
 ### HTTP API
 
 Start the API server:
