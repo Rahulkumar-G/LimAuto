@@ -63,13 +63,13 @@ class BookGraph:
 
             if any(m is None for m in metrics):
                 # No quality scores available -> end the workflow
-                return workflow[-1]
+                return END
 
             quality_score = sum(metrics) / len(metrics)
 
             if quality_score < 0.8:
                 return "writer_node"  # Revise content
-            return workflow[-1]  # Move to final node
+            return END  # Move to final node
 
         # Add conditional branching using the correct method
         self.graph.add_conditional_edges("proofreader_node", review_router)
