@@ -25,16 +25,18 @@ class WriterAgent(BaseAgent):
             outline_agent = OutlineAgent(self.llm, self.agent_type)
             state = outline_agent.process(state)
 
-        # Generate front matter
-        front_matter_agents = [
-            "ForewordAgent",
-            "DedicationAgent",
-            "EpigraphAgent",
-            "PrefaceAgent",
-            "PrologueAgent",
-        ]
+        # Generate front matter only once
+        front_matter_agents = {
+            "ForewordAgent": "foreword",
+            "DedicationAgent": "dedication",
+            "EpigraphAgent": "epigraph",
+            "PrefaceAgent": "preface",
+            "PrologueAgent": "prologue",
+        }
 
-        for agent_name in front_matter_agents:
+        for agent_name, attr in front_matter_agents.items():
+            if getattr(state, attr, None):
+                continue  # Skip if already generated
             agent_class = self._get_agent_class(agent_name)
             if agent_class:
                 agent = agent_class(self.llm, self.agent_type)
