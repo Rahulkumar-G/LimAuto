@@ -34,7 +34,10 @@ class OutlineAgent(BaseAgent):
         except json.JSONDecodeError:
             json_content = self._extract_json_block(response)
             if json_content:
-                parsed = json.loads(json_content)
+                try:
+                    parsed = json.loads(json_content)
+                except json.JSONDecodeError:
+                    parsed = None
             else:
                 parsed = None
 
@@ -89,4 +92,9 @@ class OutlineAgent(BaseAgent):
             for line in lines
             if not line.startswith("```") and line not in {"{", "}", "[", "]"}
         ]
-        return [line.lstrip("0123456789.- ").strip() for line in cleaned if line]
+        processed = []
+        for line in cleaned:
+            cleaned_line = line.lstrip("0123456789.- ").strip().strip('",')
+            if cleaned_line and "outline" not in cleaned_line.lower():
+                processed.append(cleaned_line)
+        return processed
