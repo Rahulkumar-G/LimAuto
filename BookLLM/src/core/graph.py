@@ -48,12 +48,24 @@ class BookGraph:
 
         # Add conditional branching for review
         def review_router(state: BookState) -> str:
-            """Route based on quality check"""
-            quality_score = (
-                (state.technical_accuracy_score or 0.0)
-                + (state.consistency_score or 0.0)
-                + (state.completeness_score or 0.0)
-            ) / 3.0
+            """Route based on quality check.
+
+            If quality metrics are missing the router should not loop
+            indefinitely back to ``writer_node``. In that case we stop the
+            review cycle by moving to the final node.
+            """
+
+            metrics = [
+                state.technical_accuracy_score,
+                state.consistency_score,
+                state.completeness_score,
+            ]
+
+            if any(m is None for m in metrics):
+                # No quality scores available -> end the workflow
+                return workflow[-1]
+
+            quality_score = sum(metrics) / len(metrics)
 
             if quality_score < 0.8:
                 return "writer_node"  # Revise content
