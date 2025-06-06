@@ -50,10 +50,9 @@ class BookGraph:
         def review_router(state: BookState) -> str:
             """Route based on quality check"""
             quality_score = (
-                state.technical_accuracy_score
-                or 0.0 + state.consistency_score
-                or 0.0 + state.completeness_score
-                or 0.0
+                (state.technical_accuracy_score or 0.0)
+                + (state.consistency_score or 0.0)
+                + (state.completeness_score or 0.0)
             ) / 3.0
 
             if quality_score < 0.8:
