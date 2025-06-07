@@ -63,16 +63,33 @@ class OutlineAgent(BaseAgent):
         return []
 
     def _process_outline_data(self, raw_data: List) -> List[str]:
-        """Process and sanitize outline data"""
+        """Process and sanitize outline data."""
         processed_list = []
         for item in raw_data:
             if isinstance(item, str):
                 processed_list.append(item)
+                continue
+
+            if isinstance(item, dict):
+                # Common keys used for chapter titles
+                for key in [
+                    "title",
+                    "Title",
+                    "chapter_title",
+                    "Chapter Title",
+                    "name",
+                ]:
+                    if key in item and isinstance(item[key], str):
+                        processed_list.append(item[key])
+                        break
+                else:  # no break executed
+                    processed_list.append(str(item))
             else:
                 try:
                     processed_list.append(str(item))
                 except Exception:
                     continue
+
         return processed_list
 
     def _extract_json_block(self, response: str) -> Optional[str]:
