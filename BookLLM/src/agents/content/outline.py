@@ -1,4 +1,3 @@
-import json
 import re
 from typing import List, Optional
 
@@ -30,13 +29,13 @@ class OutlineAgent(BaseAgent):
         response, _ = self.llm.call_llm(prompt, json_mode=True)
 
         try:
-            parsed = json.loads(response)
-        except json.JSONDecodeError:
+            parsed = self._parse_json(response)
+        except Exception:
             json_content = self._extract_json_block(response)
             if json_content:
                 try:
-                    parsed = json.loads(json_content)
-                except json.JSONDecodeError:
+                    parsed = self._parse_json(json_content)
+                except Exception:
                     parsed = None
             else:
                 parsed = None
