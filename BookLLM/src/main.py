@@ -6,6 +6,7 @@ import argparse
 import asyncio
 import logging
 import yaml
+import shutil
 
 from .core import BookOrchestrator
 
@@ -29,6 +30,10 @@ def main():
 
     setup_logging(args.config or str(Path(__file__).resolve().parents[1] / "config.yaml"))
     logger = logging.getLogger(__name__)
+
+    if args.pdf and shutil.which("xelatex") is None:
+        logger.error("xelatex is required for PDF export but was not found. Please install a TeX distribution that provides xelatex or omit the --pdf option.")
+        return
 
     # Create output directory
     output_dir = Path("book_output")
