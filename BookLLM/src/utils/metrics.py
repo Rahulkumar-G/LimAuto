@@ -5,7 +5,7 @@ from typing import Any, Dict
 
 
 class TokenMetricsTracker:
-    """Track and analyze token usage and costs"""
+    """Track and analyze token usage and costs."""
 
     def __init__(self):
         self.reset()
@@ -23,15 +23,41 @@ class TokenMetricsTracker:
         }
 
     def add_usage(
-        self, input_tokens: int, output_tokens: int, cost_per_token: float = 0.0
+        self,
+        input_tokens: int,
+        output_tokens: int,
+        cost_config: Any = None,
     ) -> None:
-        """Record token usage and cost"""
+        """Record token usage and cost.
+
+        Parameters
+        ----------
+        input_tokens: int
+            Number of prompt tokens sent to the model.
+        output_tokens: int
+            Number of tokens returned by the model.
+        cost_config: Any, optional
+            Object with cost configuration (``cost_per_input_token``,
+            ``cost_per_output_token`` and ``cost_per_request`` attributes).
+        """
+        cost = 0.0
+        if cost_config is not None:
+            try:
+                cost = (
+                    input_tokens * getattr(cost_config, "cost_per_input_token", 0.0)
+                    + output_tokens * getattr(cost_config, "cost_per_output_token", 0.0)
+                    + getattr(cost_config, "cost_per_request", 0.0)
+                )
+            except Exception:
+                cost = 0.0
+
         usage = {
             "timestamp": datetime.now().isoformat(),
+            "request_id": self.metrics["requests"] + 1,
             "input_tokens": input_tokens,
             "output_tokens": output_tokens,
             "total_tokens": input_tokens + output_tokens,
-            "cost": (input_tokens + output_tokens) * cost_per_token,
+            "cost": cost,
         }
 
         # Update totals
