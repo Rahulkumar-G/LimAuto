@@ -23,7 +23,8 @@ class StepTracker:
 
     def register(self, listener: Callable[[StepEvent], None]) -> None:
         """Register a listener for step change events."""
-        self.listeners.append(listener)
+        if listener not in self.listeners:
+            self.listeners.append(listener)
 
     def dispatch(self, event: StepEvent) -> None:
         """Set the current step via an event."""
