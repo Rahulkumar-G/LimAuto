@@ -2,6 +2,7 @@ import json
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, Optional
+from threading import Lock
 
 import yaml
 
@@ -33,9 +34,19 @@ class BookOrchestrator:
         self.llm = EnhancedLLMInterface(self.config)
         self.graph = BookGraph(self.llm).build()
         self.workflow = BookWorkflow()
+        self._active_topics = set()
+        self._lock = Lock()
 
     def generate_book(self, topic: str, **kwargs) -> BookState:
         """Execute full book generation process"""
+        with self._lock:
+            if topic in self._active_topics:
+                self.logger.warning(
+                    f"Book generation already in progress for '{topic}'. Skipping."
+                )
+                return None
+            self._active_topics.add(topic)
+
         try:
             # Step 1: Initialize state
             initial_state = self._create_initial_state(topic, **kwargs)
@@ -71,6 +82,10 @@ class BookOrchestrator:
         except Exception as e:
             self.logger.error(f"Book generation failed: {e}")
             raise
+
+        finally:
+            with self._lock:
+                self._active_topics.discard(topic)
 
     def _load_config(self, config: Optional[Any]) -> Dict[str, Any]:
         """Load configuration from a dict or file path."""

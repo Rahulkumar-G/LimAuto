@@ -1,6 +1,7 @@
 import asyncio
 import subprocess
 import time
+import hashlib
 from typing import Any, Dict, Optional, Tuple
 
 import tiktoken
@@ -116,6 +117,7 @@ class EnhancedLLMInterface(LLMInterface):
 
         full_prompt = f"{system_prompt}\n\n{prompt}"
         input_tokens = self.estimate_tokens(full_prompt)
+        request_id = hashlib.md5(full_prompt.encode()).hexdigest()
 
         for attempt in range(self.system_config.max_retries):
             try:
@@ -138,7 +140,12 @@ class EnhancedLLMInterface(LLMInterface):
                 output_tokens = self.estimate_tokens(response)
 
                 # Update cumulative metrics
-                self.metrics.add_usage(input_tokens, output_tokens, self.cost_config)
+                self.metrics.add_usage(
+                    input_tokens,
+                    output_tokens,
+                    self.cost_config,
+                    request_id=request_id,
+                )
 
                 return response, {
                     "input_tokens": input_tokens,
@@ -168,6 +175,7 @@ class EnhancedLLMInterface(LLMInterface):
 
         full_prompt = f"{system_prompt}\n\n{prompt}"
         input_tokens = self.estimate_tokens(full_prompt)
+        request_id = hashlib.md5(full_prompt.encode()).hexdigest()
 
         for attempt in range(self.system_config.max_retries):
             try:
@@ -193,7 +201,12 @@ class EnhancedLLMInterface(LLMInterface):
                 output_tokens = self.estimate_tokens(response)
 
                 # Update cumulative metrics
-                self.metrics.add_usage(input_tokens, output_tokens, self.cost_config)
+                self.metrics.add_usage(
+                    input_tokens,
+                    output_tokens,
+                    self.cost_config,
+                    request_id=request_id,
+                )
 
                 return response, {
                     "input_tokens": input_tokens,
