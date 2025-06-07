@@ -21,12 +21,14 @@ class TokenMetricsTracker:
             "start_time": datetime.now().isoformat(),
             "history": [],
         }
+        self._seen_requests = set()
 
     def add_usage(
         self,
         input_tokens: int,
         output_tokens: int,
         cost_config: Any = None,
+        request_id: str | None = None,
     ) -> None:
         """Record token usage and cost.
 
@@ -40,6 +42,9 @@ class TokenMetricsTracker:
             Object with cost configuration (``cost_per_input_token``,
             ``cost_per_output_token`` and ``cost_per_request`` attributes).
         """
+        if request_id and request_id in self._seen_requests:
+            return
+
         cost = 0.0
         if cost_config is not None:
             try:
@@ -69,6 +74,9 @@ class TokenMetricsTracker:
 
         # Add to history
         self.metrics["history"].append(usage)
+
+        if request_id:
+            self._seen_requests.add(request_id)
 
     def get_summary(self) -> Dict[str, Any]:
         """Get summary of token usage and costs"""
