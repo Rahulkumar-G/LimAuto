@@ -136,6 +136,12 @@ class BookOrchestrator:
         with open(output_dir / f"metadata_{timestamp}.json", "w") as f:
             json.dump(state.metadata, f, indent=2)
 
-        # Save metrics
+        # Save metrics summary with timestamp
         with open(output_dir / f"metrics_{timestamp}.json", "w") as f:
             json.dump(self.llm.metrics.get_summary(), f, indent=2)
+
+        # Persist full token metrics for later analysis
+        try:
+            self.llm.metrics.save_metrics(output_dir / "final_token_metrics.json")
+        except Exception as e:
+            self.logger.error(f"Failed to save final token metrics: {e}")

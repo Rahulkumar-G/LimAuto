@@ -5,7 +5,8 @@ from typing import Any, Dict, Optional, Tuple
 
 import tiktoken
 
-from ..models.config import CostConfig, ModelConfig, SystemConfig, TokenMetrics
+from ..models.config import CostConfig, ModelConfig, SystemConfig
+from ..utils.metrics import TokenMetricsTracker
 from ..utils.logger import get_logger
 
 
@@ -41,7 +42,7 @@ class EnhancedLLMInterface(LLMInterface):
     def __init__(self, config: Dict[str, Any]):
         super().__init__(config)
         self.logger = get_logger(__name__)  # Use consistent logger
-        self.metrics = TokenMetrics()  # Initialize metrics tracking
+        self.metrics = TokenMetricsTracker()  # Initialize metrics tracking
         self._check_ollama_setup()
 
     def _validate_prompt(self, prompt: str) -> None:
