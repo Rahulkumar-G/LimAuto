@@ -1,21 +1,24 @@
 from pathlib import Path
-
+import json
 import yaml
 from flask import Flask, jsonify, request
 
 from .core import BookOrchestrator
+from .utils.metrics import TokenMetricsTracker
 
 app = Flask(__name__)
 
 # Default config path within the package
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.yaml"
 
-# Temporary in-memory metrics data
-METRICS_SAMPLE = [
-    {"timestamp": "00:00", "p99_latency_ms": 950, "tokens_per_minute": 210},
-    {"timestamp": "00:01", "p99_latency_ms": 1020, "tokens_per_minute": 180},
-    {"timestamp": "00:02", "p99_latency_ms": 980, "tokens_per_minute": 195},
-]
+# Path for the metrics file determined from configuration
+def _metrics_file_path() -> Path:
+    config = {}
+    if CONFIG_PATH.exists():
+        with open(CONFIG_PATH) as f:
+            config = yaml.safe_load(f) or {}
+    output_dir = config.get("system", {}).get("output_dir", "./book_output")
+    return Path(output_dir) / "final_token_metrics.json"
 
 
 @app.route("/generate", methods=["POST"])
@@ -37,8 +40,17 @@ def generate_book():
 
 @app.route("/api/metrics", methods=["GET"])
 def get_metrics():
-    """Return latency and token metrics."""
-    return jsonify(METRICS_SAMPLE)
+    """Return final token usage metrics."""
+    metrics_file = _metrics_file_path()
+    if not metrics_file.exists():
+        return jsonify({"error": "metrics not found"}), 404
+
+    with open(metrics_file) as f:
+        data = json.load(f)
+
+    tracker = TokenMetricsTracker()
+    tracker.metrics = data
+    return jsonify(tracker.get_summary())
 
 
 @app.route("/health", methods=["GET"])

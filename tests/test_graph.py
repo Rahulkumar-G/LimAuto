@@ -49,12 +49,8 @@ from BookLLM.src.agents.content.outline import OutlineAgent
 from BookLLM.src.agents.content.writer import WriterAgent
 from BookLLM.src.agents.enhancement.code import CodeSampleAgent
 from BookLLM.src.agents.enhancement.glossary import GlossaryAgent
-from BookLLM.src.models.config import (
-    CostConfig,
-    ModelConfig,
-    SystemConfig,
-    TokenMetrics,
-)
+from BookLLM.src.models.config import CostConfig, ModelConfig, SystemConfig
+from BookLLM.src.utils.metrics import TokenMetricsTracker
 from BookLLM.src.models.state import BookState
 
 
@@ -63,7 +59,7 @@ class DummyLLM:
         self.system_config = SystemConfig(output_dir=Path("test_output"))
         self.model_config = ModelConfig()
         self.cost_config = CostConfig()
-        self.metrics = TokenMetrics()
+        self.metrics = TokenMetricsTracker()
 
     def call_llm(self, prompt: str, json_mode: bool = False, **kwargs):
         if "book outline" in prompt:

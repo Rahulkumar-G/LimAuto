@@ -4,7 +4,8 @@ import sys
 sys.path.append(str(Path(__file__).resolve().parents[1]))
 import pandas as pd
 from BookLLM.src.models.state import BookState
-from BookLLM.src.models.config import SystemConfig, ModelConfig, CostConfig, TokenMetrics
+from BookLLM.src.models.config import SystemConfig, ModelConfig, CostConfig
+from BookLLM.src.utils.metrics import TokenMetricsTracker
 from BookLLM.src.agents.content.outline import OutlineAgent
 from BookLLM.src.agents.content.writer import WriterAgent
 from BookLLM.src.agents.content.chapter import ChapterWriterAgent
@@ -19,7 +20,7 @@ class DummyLLM:
         self.system_config = SystemConfig(output_dir=Path("benchmark_output"))
         self.model_config = ModelConfig()
         self.cost_config = CostConfig()
-        self.metrics = TokenMetrics()
+        self.metrics = TokenMetricsTracker()
 
     def call_llm(self, prompt: str, json_mode: bool = False, **kwargs):
         if "book outline" in prompt:
