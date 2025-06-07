@@ -1,5 +1,3 @@
-import json
-
 from ...models.agent_type import AgentType
 from ...models.state import BookState
 from ..base import BaseAgent
@@ -27,18 +25,7 @@ class GlossaryAgent(BaseAgent):
 
         try:
             response, _ = self.llm.call_llm(prompt, json_mode=True)
-            # Some models may output additional text before/after the JSON. Try
-            # to extract the first valid JSON object if parsing fails.
-            try:
-                data = json.loads(response)
-            except json.JSONDecodeError:
-                cleaned = response.strip()
-                start = cleaned.find("{")
-                end = cleaned.rfind("}")
-                if start != -1 and end != -1 and end > start:
-                    data = json.loads(cleaned[start : end + 1])
-                else:
-                    raise
+            data = self._parse_json(response)
 
             # Normalize potential nested structures
             glossary = {}
@@ -101,7 +88,7 @@ class AcronymAgent(BaseAgent):
 
         try:
             response, _ = self.llm.call_llm(prompt, json_mode=True)
-            state.acronyms = json.loads(response)
+            state.acronyms = self._parse_json(response)
             self.logger.info(f"Extracted {len(state.acronyms)} acronyms")
         except Exception as e:
             self.logger.warning(f"Acronym extraction failed: {e}")

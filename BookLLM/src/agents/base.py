@@ -101,3 +101,28 @@ class BaseAgent:
             self.logger.info(f"Saved output for {step_name} to {file_path}")
         except Exception as e:
             self.logger.error(f"Failed to save output for {step_name}: {e}")
+
+    @staticmethod
+    def _parse_json(response: str) -> Any:
+        """Parse JSON from a string, ignoring text before/after the JSON block."""
+        try:
+            return json.loads(response)
+        except json.JSONDecodeError:
+            cleaned = response.strip()
+            # Look for object or array delimiters
+            first_obj = cleaned.find("{")
+            last_obj = cleaned.rfind("}")
+            first_arr = cleaned.find("[")
+            last_arr = cleaned.rfind("]")
+            candidates = []
+            if first_obj != -1 and last_obj != -1 and last_obj > first_obj:
+                candidates.append(cleaned[first_obj : last_obj + 1])
+            if first_arr != -1 and last_arr != -1 and last_arr > first_arr:
+                candidates.append(cleaned[first_arr : last_arr + 1])
+            for snippet in candidates:
+                try:
+                    return json.loads(snippet)
+                except json.JSONDecodeError:
+                    continue
+            raise
+
