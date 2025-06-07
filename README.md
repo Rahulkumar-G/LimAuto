@@ -50,11 +50,13 @@ python -m BookLLM.src.main "My Book Topic" \
   --audience beginners \
   --style professional \
   --pages 100 \
-  --lang en
+  --lang en \
+  --pdf
 ```
 
 The generated book (Markdown), metadata and token metrics will be written to the
-folder specified in the configuration (default: `book_output`).
+folder specified in the configuration (default: `book_output`). If `--pdf` is
+specified a PDF version will also be generated using Pandoc.
 
 During generation you will see a **step tracker** showing the current phase
 (e.g. `Step 1/3: Scaffolding`) and a progress bar for chapter creation. The
