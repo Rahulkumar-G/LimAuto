@@ -1,7 +1,9 @@
 from .core import BookOrchestrator
 from .logging_config import setup_logging
+from .services.export import ExportService
 from pathlib import Path
 import argparse
+import asyncio
 import logging
 import yaml
 
@@ -17,6 +19,11 @@ def main():
     parser.add_argument("--style", default="professional", help="Writing style")
     parser.add_argument("--pages", type=int, default=100, help="Target page count")
     parser.add_argument("--lang", default="en", help="Book language")
+    parser.add_argument(
+        "--pdf",
+        action="store_true",
+        help="Export the generated book to PDF (requires pandoc and xelatex)",
+    )
 
     args = parser.parse_args()
 
@@ -43,13 +50,18 @@ def main():
     orchestrator = BookOrchestrator(default_config)
 
     try:
-        orchestrator.generate_book(
+        state = orchestrator.generate_book(
             topic=args.topic,
             target_audience=args.audience,
             style=args.style,
             pages=args.pages,
             language=args.lang,
         )
+
+        if args.pdf:
+            exporter = ExportService(output_dir)
+            pdf_path = asyncio.run(exporter.export_pdf(state))
+            logger.info(f"📄 PDF exported to: {pdf_path}")
 
         logger.info("\n✅ Book generation completed!")
         logger.info(f"📚 Files saved in: {output_dir}")
