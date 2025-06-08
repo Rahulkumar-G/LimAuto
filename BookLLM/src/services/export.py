@@ -1,4 +1,5 @@
 import subprocess
+import shutil
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
@@ -56,32 +57,62 @@ class ExportService:
             raise RuntimeError(f"Markdown export failed: {e}")
 
     async def export_pdf(self, state: BookState) -> Path:
-        """Export book as PDF using pandoc"""
+        """Export book as PDF using pandoc or fallback to FPDF"""
         md_path = await self.export_markdown(state)
         pdf_path = md_path.with_suffix(".pdf")
 
-        try:
-            subprocess.run(
-                [
-                    "pandoc",
-                    str(md_path),
-                    "-o",
-                    str(pdf_path),
-                    "--pdf-engine=xelatex",
-                    "--toc",
-                    "--toc-depth=3",
-                    "--highlight-style=tango",
-                    "--variable",
-                    "geometry:margin=1in",
-                    "--variable",
-                    f"title:{state.metadata.get('title', 'Untitled')}",
-                    "--top-level-division=chapter",
-                ],
-                check=True,
-            )
-            return pdf_path
-        except subprocess.CalledProcessError as e:
-            raise RuntimeError(f"PDF export failed: {e}")
+        pandoc_available = shutil.which("pandoc") and shutil.which("xelatex")
+
+        if pandoc_available:
+            try:
+                subprocess.run(
+                    [
+                        "pandoc",
+                        str(md_path),
+                        "-o",
+                        str(pdf_path),
+                        "--pdf-engine=xelatex",
+                        "--toc",
+                        "--toc-depth=3",
+                        "--highlight-style=tango",
+                        "--variable",
+                        "geometry:margin=1in",
+                        "--variable",
+                        f"title:{state.metadata.get('title', 'Untitled')}",
+                        "--top-level-division=chapter",
+                    ],
+                    check=True,
+                )
+                return pdf_path
+            except subprocess.CalledProcessError as e:
+                raise RuntimeError(f"PDF export failed: {e}")
+        else:
+            # Simple fallback PDF generation using FPDF
+            try:
+                from fpdf import FPDF
+
+                pdf = FPDF()
+                pdf.set_auto_page_break(auto=True, margin=15)
+                pdf.add_page()
+                pdf.set_font("Helvetica", size=12)
+
+                width = pdf.w - 2 * pdf.l_margin
+                for line in md_path.read_text().splitlines():
+                    if line.startswith("# "):
+                        pdf.set_font("Helvetica", "B", 16)
+                        pdf.multi_cell(width, 10, line[2:])
+                        pdf.set_font("Helvetica", size=12)
+                    elif line.startswith("## "):
+                        pdf.set_font("Helvetica", "B", 14)
+                        pdf.multi_cell(width, 10, line[3:])
+                        pdf.set_font("Helvetica", size=12)
+                    else:
+                        pdf.multi_cell(width, 10, line)
+
+                pdf.output(str(pdf_path))
+                return pdf_path
+            except Exception as e:
+                raise RuntimeError(f"PDF export failed: {e}")
 
     async def export_epub(self, state: BookState) -> Path:
         """Export book as EPUB"""
