@@ -7,6 +7,7 @@ from ...models.state import BookState
 from ..base import BaseAgent
 from .chapter import ChapterWriterAgent
 from .outline import OutlineAgent
+from .front_matter.book_title import BookTitleAgent
 
 
 class WriterAgent(BaseAgent):
@@ -20,6 +21,11 @@ class WriterAgent(BaseAgent):
         # Initialize book structure
         state.generation_started = datetime.now()
 
+        # Generate book title if missing
+        if not state.book_title:
+            title_agent = BookTitleAgent(self.llm, self.agent_type)
+            state = title_agent.process(state)
+
         # Create outline if not exists
         if not state.outline:
             outline_agent = OutlineAgent(self.llm, self.agent_type)
@@ -27,6 +33,7 @@ class WriterAgent(BaseAgent):
 
         # Generate front matter only once
         front_matter_agents = {
+            "TitlePageAgent": "title_page",
             "ForewordAgent": "foreword",
             "DedicationAgent": "dedication",
             "EpigraphAgent": "epigraph",
