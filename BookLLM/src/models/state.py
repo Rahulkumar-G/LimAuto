@@ -9,6 +9,8 @@ class BookState(BaseModel):
 
     # Core metadata
     topic: str
+    book_title: Optional[str] = None
+    book_subtitle: Optional[str] = None
     target_audience: str = "beginners"
     book_style: str = "professional"
     estimated_pages: int = 100
