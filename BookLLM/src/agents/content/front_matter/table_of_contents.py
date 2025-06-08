@@ -51,6 +51,10 @@ class TableOfContentsAgent(BaseAgent):
             back_matter.append("- Glossary")
         if state.bibliography:
             back_matter.append("- Bibliography")
+        if state.acknowledgments:
+            back_matter.append("- Acknowledgments")
+        if state.about_the_author:
+            back_matter.append("- About the Author")
         if state.index_terms:
             back_matter.append("- Index")
         if state.appendices:
