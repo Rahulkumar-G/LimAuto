@@ -16,7 +16,8 @@ class TitlePageAgent(BaseAgent):
         prompt = f"""
         Create a professional title page for book:
         
-        Title: {state.topic}
+        Title: {state.book_title or state.topic}
+        Subtitle: {state.book_subtitle or ''}
         Style: {state.book_style}
         Audience: {state.target_audience}
         
