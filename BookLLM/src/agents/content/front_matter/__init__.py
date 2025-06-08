@@ -1,3 +1,4 @@
+from .book_title import BookTitleAgent
 from .dedication import DedicationAgent
 from .epigraph import EpigraphAgent
 from .foreword import ForewordAgent
@@ -8,6 +9,7 @@ from .title_page import TitlePageAgent
 
 __all__ = [
     "TitlePageAgent",
+    "BookTitleAgent",
     "TableOfContentsAgent",
     "ForewordAgent",
     "DedicationAgent",
