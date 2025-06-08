@@ -50,6 +50,8 @@ class BookState(BaseModel):
     code_samples: Dict[str, str] = Field(default_factory=dict)
     exercises: Dict[str, List[str]] = Field(default_factory=dict)
     case_studies: Dict[str, str] = Field(default_factory=dict)
+    check_questions: Dict[str, List[str]] = Field(default_factory=dict)
+    templates: Dict[str, str] = Field(default_factory=dict)
 
     # Visual elements
     images: Dict[str, str] = Field(default_factory=dict)

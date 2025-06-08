@@ -3,7 +3,13 @@ from typing import Any, Dict, List
 from langgraph.graph import END, StateGraph
 
 from ..agents.content import ChapterWriterAgent, OutlineAgent, WriterAgent
-from ..agents.enhancement import CodeSampleAgent, GlossaryAgent
+from ..agents.enhancement import (
+    CodeSampleAgent,
+    GlossaryAgent,
+    CaseStudyAgent,
+    QuizAgent,
+    TemplateAgent,
+)
 from ..agents.review import ProofreaderAgent
 from ..models.agent_type import AgentType
 from ..models.state import BookState
@@ -83,6 +89,9 @@ class BookGraph:
             "proofreader": ProofreaderAgent(self.llm, AgentType.REVIEWER),
             "glossary": GlossaryAgent(self.llm, AgentType.ENHANCER),
             "code": CodeSampleAgent(self.llm, AgentType.ENHANCER),
+            "case": CaseStudyAgent(self.llm, AgentType.ENHANCER),
+            "quiz": QuizAgent(self.llm, AgentType.ENHANCER),
+            "template": TemplateAgent(self.llm, AgentType.ENHANCER),
         }
 
     def _create_nodes(self) -> Dict[str, callable]:
@@ -107,5 +116,8 @@ class BookGraph:
             "chapter_node",
             "glossary_node",
             "code_node",
+            "case_node",
+            "quiz_node",
+            "template_node",
             "proofreader_node",
         ]
