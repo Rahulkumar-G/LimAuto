@@ -59,7 +59,8 @@ The generated book (Markdown), metadata and token metrics will be written to the
 folder specified in the configuration (default: `book_output`). If `--pdf` is
 specified a PDF version will also be generated. The exporter will use Pandoc and
 `xelatex` when available, otherwise it falls back to the lightweight `fpdf2`
-library.
+library. Before exporting, a style guide enforcer normalizes heading levels and
+emphasis in the generated Markdown.
 
 During generation you will see a **step tracker** showing the current phase
 (e.g. `Step 1/3: Scaffolding`) and a progress bar for chapter creation. The
