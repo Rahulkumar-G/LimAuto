@@ -59,7 +59,7 @@ class QualityControl:
                 state, validation_results, quality_scores
             )
 
-            # Step 7: Improvement Recommendations
+            # Step 8: Improvement Recommendations
             if not self._meets_quality_standards(quality_scores):
                 state.metadata["improvement_plan"] = (
                     await self._generate_improvement_plan(state)
