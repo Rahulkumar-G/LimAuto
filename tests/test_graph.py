@@ -49,6 +49,9 @@ from BookLLM.src.agents.content.outline import OutlineAgent
 from BookLLM.src.agents.content.writer import WriterAgent
 from BookLLM.src.agents.enhancement.code import CodeSampleAgent
 from BookLLM.src.agents.enhancement.glossary import GlossaryAgent
+from BookLLM.src.agents.enhancement.case_study import CaseStudyAgent
+from BookLLM.src.agents.enhancement.quiz import QuizAgent
+from BookLLM.src.agents.enhancement.template import TemplateAgent
 from BookLLM.src.models.config import CostConfig, ModelConfig, SystemConfig
 from BookLLM.src.utils.metrics import TokenMetricsTracker
 from BookLLM.src.models.state import BookState
@@ -70,6 +73,12 @@ class DummyLLM:
             return "This chapter includes code snippets", {}
         if "Create practical code examples" in prompt:
             return "```python\nprint('example')\n```", {}
+        if "case study" in prompt.lower():
+            return "Case Study", {}
+        if "check your understanding" in prompt.lower():
+            return '["Q1","Q2"]', {}
+        if "downloadable worksheet" in prompt.lower() or "template" in prompt.lower():
+            return "Template", {}
         return "text", {}
 
     async def acall_llm(self, prompt: str, json_mode: bool = False, **kwargs):
@@ -98,3 +107,15 @@ def test_agent_workflow():
     code_agent = CodeSampleAgent(dummy_llm)
     state = code_agent._execute_logic(state)
     assert state.code_samples
+
+    case_agent = CaseStudyAgent(dummy_llm)
+    state = case_agent._execute_logic(state)
+    assert state.case_studies
+
+    quiz_agent = QuizAgent(dummy_llm)
+    state = quiz_agent._execute_logic(state)
+    assert state.check_questions
+
+    template_agent = TemplateAgent(dummy_llm)
+    state = template_agent._execute_logic(state)
+    assert state.templates

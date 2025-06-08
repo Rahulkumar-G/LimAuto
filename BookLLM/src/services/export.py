@@ -203,6 +203,19 @@ class ExportService:
         for i, chapter_title in enumerate(state.chapters, 1):
             content = state.chapter_map.get(chapter_title, "")
             sections.append(f"## Chapter {i}: {chapter_title}\n\n{content}")
+            case = state.case_studies.get(chapter_title)
+            if case:
+                sections.append(f"### Case Study\n\n{case}")
+
+            questions = state.check_questions.get(chapter_title)
+            if questions:
+                sections.append("### Check Your Understanding")
+                for q in questions:
+                    sections.append(f"- {q}")
+
+            template = state.templates.get(chapter_title)
+            if template:
+                sections.append(f"### Template\n\n{template}")
 
         # Back matter
         if state.glossary:
