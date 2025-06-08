@@ -1,9 +1,11 @@
 import re
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
 from tqdm import tqdm
 
 from ...models.agent_type import AgentType
 from ...models.state import BookState
+from ...utils import log_progress_json
 from ..base import BaseAgent
 
 
@@ -25,9 +27,7 @@ class ChapterWriterAgent(BaseAgent):
         total = len(state.chapters)
         with tqdm(total=total, desc="Chapters", unit="chapter") as pbar:
             for i, title in enumerate(state.chapters):
-                self.logger.info(
-                    f"Writing chapter {i + 1}/{total}: {title}"
-                )
+                self.logger.info(f"Writing chapter {i + 1}/{total}: {title}")
                 content = self._write_single_chapter(title, state, i)
                 state.chapter_map[title] = content
                 pbar.update(1)
@@ -62,12 +62,21 @@ class ChapterWriterAgent(BaseAgent):
         self, title: str, state: BookState, chapter_index: int
     ) -> str:
         """Generate content for a single chapter"""
-        previous_chapters = self._get_previous_chapters_context(state, chapter_index)
-        prompt = self._build_chapter_prompt(
-            title, state, chapter_index, previous_chapters
-        )
-        content, _ = self.llm.call_llm(prompt)
-        return self._post_process_chapter(content, state, title)
+        log_progress_json(self.logger, self.__class__.__name__, title, "started")
+        try:
+            previous_chapters = self._get_previous_chapters_context(
+                state, chapter_index
+            )
+            prompt = self._build_chapter_prompt(
+                title, state, chapter_index, previous_chapters
+            )
+            content, _ = self.llm.call_llm(prompt)
+            processed = self._post_process_chapter(content, state, title)
+            log_progress_json(self.logger, self.__class__.__name__, title, "completed")
+            return processed
+        except Exception as e:
+            log_progress_json(self.logger, self.__class__.__name__, title, "failed")
+            raise
 
     def _build_chapter_prompt(
         self, title: str, state: BookState, chapter_index: int, previous_chapters: str
