@@ -44,6 +44,12 @@ schemas_mod.RunBase = RunBase
 schemas_mod.RunTypeEnum = RunTypeEnum
 sys.modules.setdefault("langsmith.schemas", schemas_mod)
 
+from BookLLM.src.agents.content.back_matter import (
+    AboutAuthorAgent,
+    AcknowledgmentsAgent,
+    BibliographyAgent,
+    IndexAgent,
+)
 from BookLLM.src.agents.content.chapter import ChapterWriterAgent
 from BookLLM.src.agents.content.outline import OutlineAgent
 from BookLLM.src.agents.content.writer import WriterAgent
@@ -53,8 +59,8 @@ from BookLLM.src.agents.enhancement.case_study import CaseStudyAgent
 from BookLLM.src.agents.enhancement.quiz import QuizAgent
 from BookLLM.src.agents.enhancement.template import TemplateAgent
 from BookLLM.src.models.config import CostConfig, ModelConfig, SystemConfig
-from BookLLM.src.utils.metrics import TokenMetricsTracker
 from BookLLM.src.models.state import BookState
+from BookLLM.src.utils.metrics import TokenMetricsTracker
 
 
 class DummyLLM:
@@ -79,6 +85,14 @@ class DummyLLM:
             return '["Q1","Q2"]', {}
         if "downloadable worksheet" in prompt.lower() or "template" in prompt.lower():
             return "Template", {}
+        if "acknowledgments" in prompt.lower():
+            return "Thanks to everyone", {}
+        if "biography" in prompt.lower() or "about the author" in prompt.lower():
+            return "Author bio", {}
+        if "detailed bibliography" in prompt.lower() or "Format entries" in prompt:
+            return "Reference 1", {}
+        if "comprehensive index" in prompt:
+            return "Topic\nConcept", {}
         return "text", {}
 
     async def acall_llm(self, prompt: str, json_mode: bool = False, **kwargs):
@@ -119,3 +133,20 @@ def test_agent_workflow():
     template_agent = TemplateAgent(dummy_llm)
     state = template_agent._execute_logic(state)
     assert state.templates
+    ack_agent = AcknowledgmentsAgent(dummy_llm)
+    state = ack_agent._execute_logic(state)
+    assert state.acknowledgments == "Thanks to everyone"
+
+    about_agent = AboutAuthorAgent(dummy_llm)
+    state = about_agent._execute_logic(state)
+    assert state.about_the_author == "Author bio"
+
+    state.references = ["Reference 1"]
+    biblio_agent = BibliographyAgent(dummy_llm)
+    state = biblio_agent._execute_logic(state)
+    assert "Reference" in state.bibliography
+
+    index_agent = IndexAgent(dummy_llm)
+    state.glossary = {"Term": "Def"}
+    state = index_agent._execute_logic(state)
+    assert any("see Glossary" in t for t in state.index_terms)
