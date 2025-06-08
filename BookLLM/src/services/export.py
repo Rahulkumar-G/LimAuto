@@ -6,6 +6,7 @@ from typing import Dict, List
 
 from ..models.state import BookState
 from ..utils.logger import get_logger
+from ..utils.style_guide import StyleGuideEnforcer
 
 
 class ExportService:
@@ -51,6 +52,7 @@ class ExportService:
 
         try:
             content = self._compile_content(state)
+            content = StyleGuideEnforcer.enforce(content)
             output_path.write_text(content)
             return output_path
         except Exception as e:
