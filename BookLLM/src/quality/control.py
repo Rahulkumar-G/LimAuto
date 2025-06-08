@@ -5,6 +5,7 @@ from ..agents.review import ContentValidator, ProofreaderAgent
 from ..models.state import BookState
 from ..utils.logger import get_logger
 from .metrics import QualityMetrics
+from .sanity import SanityChecker
 
 
 class QualityControl:
@@ -47,12 +48,16 @@ class QualityControl:
             # Step 5: Readability Analysis
             await self._analyze_readability(state)
 
-            # Step 6: Generate Quality Report
+            # Step 6: Sanity Check for artifacts
+            sanity = SanityChecker().check(state.compiled_book or "")
+            state.metadata["sanity_check"] = sanity
+
+            # Step 7: Generate Quality Report
             state.metadata["quality_report"] = await self._generate_detailed_report(
                 state, validation_results, quality_scores
             )
 
-            # Step 7: Improvement Recommendations
+            # Step 8: Improvement Recommendations
             if not self._meets_quality_standards(quality_scores):
                 state.metadata["improvement_plan"] = (
                     await self._generate_improvement_plan(state)
