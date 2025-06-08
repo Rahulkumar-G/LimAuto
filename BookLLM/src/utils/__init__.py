@@ -2,6 +2,7 @@
 from .logger import get_logger
 from .metrics import QualityMetricsTracker, TokenMetricsTracker
 from .step_tracker import StepTracker, step_tracker
+from .style_guide import StyleGuideEnforcer
 
 __all__ = [
     "get_logger",
@@ -9,4 +10,5 @@ __all__ = [
     "QualityMetricsTracker",
     "StepTracker",
     "step_tracker",
+    "StyleGuideEnforcer",
 ]
