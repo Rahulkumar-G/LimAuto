@@ -35,35 +35,45 @@ class GlossaryAgent(BaseAgent):
                     for entry in items:
                         if isinstance(entry, dict):
                             term = entry.get("key") or entry.get("term")
-                            definition = entry.get("value") or entry.get(
-                                "definition"
-                            )
+                            definition = entry.get("value") or entry.get("definition")
                             if term and definition:
                                 glossary[str(term)] = str(definition)
             elif isinstance(data, list):
                 for entry in data:
                     if isinstance(entry, dict):
                         term = entry.get("key") or entry.get("term")
-                        definition = entry.get("value") or entry.get(
-                            "definition"
-                        )
+                        definition = entry.get("value") or entry.get("definition")
                         if term and definition:
                             glossary[str(term)] = str(definition)
                     elif isinstance(entry, list) and len(entry) == 2:
                         glossary[str(entry[0])] = str(entry[1])
             elif isinstance(data, dict):
-                glossary = {str(k): str(v) for k, v in data.items() if isinstance(v, str)}
+                glossary = {
+                    str(k): str(v) for k, v in data.items() if isinstance(v, str)
+                }
 
             if not glossary:
                 raise ValueError("Invalid glossary format")
 
             state.glossary = glossary
-            self.logger.info(
-                f"Generated glossary with {len(state.glossary)} terms"
-            )
+            self.logger.info(f"Generated glossary with {len(state.glossary)} terms")
         except Exception as e:
             self.logger.warning(f"Glossary generation failed: {e}")
-            state.warnings.append(f"Glossary incomplete: {str(e)}")
+            fallback = {}
+            for line in response.splitlines():
+                if ":" in line:
+                    term, definition = line.split(":", 1)
+                    term = term.strip(" -*\"'")
+                    definition = definition.strip()
+                    if term and definition:
+                        fallback[term] = definition
+            if fallback:
+                state.glossary = fallback
+                self.logger.info(
+                    f"Fallback glossary parsed with {len(state.glossary)} terms"
+                )
+            else:
+                state.warnings.append(f"Glossary incomplete: {str(e)}")
         return state
 
 

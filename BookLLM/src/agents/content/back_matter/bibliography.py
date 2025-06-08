@@ -16,16 +16,16 @@ class BibliographyAgent(BaseAgent):
 
         prompt = f"""
         Create a detailed bibliography for references in {state.topic} book.
-        
+
         References to format:
         {state.references}
-        
+
         Requirements:
-        - Use consistent academic citation style
+        - Format entries using APA citation style
         - Sort alphabetically by author
         - Include all necessary metadata
-        - Format for {state.target_audience} readability
         - Add brief annotations where helpful
+        - Provide cross-references so citations can be linked to chapters
         """
 
         state.bibliography, _ = self.llm.call_llm(prompt)
