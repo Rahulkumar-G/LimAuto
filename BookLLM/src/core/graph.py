@@ -2,17 +2,15 @@ from typing import Any, Dict, List
 
 from langgraph.graph import END, StateGraph
 
-from ..agents.content import ChapterWriterAgent, OutlineAgent, WriterAgent
-from ..agents.enhancement import (
-    CodeSampleAgent,
-    GlossaryAgent,
-    CaseStudyAgent,
-    QuizAgent,
-    TemplateAgent,
-)
-from ..agents.review import ProofreaderAgent
+from ..agents.content import OutlineAgent, WriterAgent
 from ..models.agent_type import AgentType
 from ..models.state import BookState
+from ..content.review.proofreader import ReviewerAgent
+from ..content.enhancement.enhancer import ContentEnhancementAgent
+from ..content.enhancement.acronym import AcronymAgent
+from ..content.review.validator import QualityAssuranceAgent
+from .orchestrator import FinalCompilationAgent
+from .types import Config, AgentInput
 
 
 class BookGraph:
@@ -47,61 +45,47 @@ class BookGraph:
         return self.graph.compile()
 
     def _create_edges(self, workflow: List[str]):
-        """Create edges between nodes"""
-        # Create linear chain
+        """Create linear edges between workflow nodes."""
         for i in range(len(workflow) - 1):
             self.graph.add_edge(workflow[i], workflow[i + 1])
 
-        # Add conditional branching for review
-        def review_router(state: BookState) -> str:
-            """Route based on quality check.
-
-            If quality metrics are missing the router should not loop
-            indefinitely back to ``writer_node``. In that case we stop the
-            review cycle by moving to the final node.
-            """
-
-            metrics = [
-                state.technical_accuracy_score,
-                state.consistency_score,
-                state.completeness_score,
-            ]
-
-            if any(m is None for m in metrics):
-                # No quality scores available -> end the workflow
-                return END
-
-            quality_score = sum(metrics) / len(metrics)
-
-            if quality_score < 0.8:
-                return "writer_node"  # Revise content
-            return END  # Move to final node
-
-        # Add conditional branching using the correct method
-        self.graph.add_conditional_edges("proofreader_node", review_router)
-
     def _initialize_agents(self) -> Dict[str, Any]:
-        """Initialize all required agents"""
+        """Initialize all required agents for the simplified pipeline."""
+        cfg = Config()
         return {
-            "writer": WriterAgent(self.llm, AgentType.CONTENT_CREATOR),
             "outline": OutlineAgent(self.llm, AgentType.CONTENT_CREATOR),
-            "chapter": ChapterWriterAgent(self.llm, AgentType.CONTENT_CREATOR),
-            "proofreader": ProofreaderAgent(self.llm, AgentType.REVIEWER),
-            "glossary": GlossaryAgent(self.llm, AgentType.ENHANCER),
-            "code": CodeSampleAgent(self.llm, AgentType.ENHANCER),
-            "case": CaseStudyAgent(self.llm, AgentType.ENHANCER),
-            "quiz": QuizAgent(self.llm, AgentType.ENHANCER),
-            "template": TemplateAgent(self.llm, AgentType.ENHANCER),
+            "writer": WriterAgent(self.llm, AgentType.CONTENT_CREATOR),
+            "reviewer": ReviewerAgent(cfg),
+            "enhancer": ContentEnhancementAgent(cfg),
+            "acronym": AcronymAgent(cfg),
+            "quality": QualityAssuranceAgent(cfg),
+            "final": FinalCompilationAgent(cfg),
         }
 
     def _create_nodes(self) -> Dict[str, callable]:
         """Create graph nodes from agents"""
         nodes = {}
         for name, agent in self.agents.items():
-
             def make_func(a):
                 def _inner(state: BookState):
-                    return a.process(state)
+                    input_data = AgentInput(content=state.compiled_book or "\n".join(state.chapters), metadata=state.metadata, outline=None)
+                    result = a.run(input_data)
+                    if result.corrected_text:
+                        state.compiled_book = result.corrected_text
+                    if result.enhanced_content:
+                        state.compiled_book = result.enhanced_content
+                    if result.resolved_content:
+                        state.compiled_book = result.resolved_content
+                    if result.acronym_glossary:
+                        state.acronyms.update(result.acronym_glossary)
+                    if result.final_doc:
+                        state.compiled_book = result.final_doc
+                        if result.toc:
+                            state.table_of_contents = "\n".join(f"{e.chapter}. {e.title}" for e in result.toc)
+                    if result.is_valid is not None:
+                        state.metadata.setdefault("qa", {})["is_valid"] = result.is_valid
+                        state.metadata.setdefault("qa", {})["issues"] = result.issues
+                    return state
 
                 return _inner
 
@@ -113,11 +97,9 @@ class BookGraph:
         return [
             "outline_node",
             "writer_node",
-            "chapter_node",
-            "glossary_node",
-            "code_node",
-            "case_node",
-            "quiz_node",
-            "template_node",
-            "proofreader_node",
+            "reviewer_node",
+            "enhancer_node",
+            "acronym_node",
+            "quality_node",
+            "final_node",
         ]
