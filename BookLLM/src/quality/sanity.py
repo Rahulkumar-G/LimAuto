@@ -1,31 +1,25 @@
-import json
+
 import re
-from typing import Any, Dict, List
-
-from ..utils.logger import get_logger
+from typing import List
 
 
-class SanityChecker:
-    """Simple sanity checks for compiled book content."""
+CODE_BLOCK_RE = re.compile(r"```.*?```", re.DOTALL)
+JSON_RE = re.compile(r"\{[^{}]*:[^{}]*\}|\[[^\[\]]*\]", re.DOTALL)
 
-    JSON_LINE_RE = re.compile(r"^\s*[\[{].*[\]}]\s*$")
 
-    def __init__(self) -> None:
-        self.logger = get_logger(__name__)
+def find_unexpected_json(text: str) -> List[str]:
+    """Return JSON-like snippets that appear outside code blocks."""
+    sanitized = CODE_BLOCK_RE.sub("", text)
+    return [m.group(0) for m in JSON_RE.finditer(sanitized)]
 
-    def check(self, content: str) -> Dict[str, Any]:
-        """Check book content for common formatting issues.
 
-        Currently detects stray JSON snippets that occasionally appear in
-        LLM output.
-        """
-        issues: List[str] = []
-        for i, line in enumerate(content.splitlines(), 1):
-            if self.JSON_LINE_RE.match(line):
-                stripped = line.strip()
-                try:
-                    json.loads(stripped)
-                    issues.append(f"Line {i} contains JSON snippet")
-                except json.JSONDecodeError:
-                    continue
-        return {"passed": not issues, "issues": issues}
+def check_book_content(contents: List[str]) -> List[str]:
+    """Check a list of text sections for stray JSON."""
+    issues = []
+    for i, section in enumerate(contents, 1):
+        for snippet in find_unexpected_json(section):
+            preview = snippet.replace("\n", " ")
+            if len(preview) > 30:
+                preview = preview[:27] + "..."
+            issues.append(f"Section {i}: {preview}")
+    return issues
