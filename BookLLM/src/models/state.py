@@ -78,6 +78,7 @@ class BookState(BaseModel):
 
     # Final content
     acknowledgments: Optional[str] = None
+    about_the_author: Optional[str] = None
     conclusion: Optional[str] = None
     appendices: Dict[str, str] = Field(default_factory=dict)
     bibliography: Optional[str] = None

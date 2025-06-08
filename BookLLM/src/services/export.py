@@ -1,5 +1,5 @@
-import subprocess
 import shutil
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
@@ -217,5 +217,16 @@ class ExportService:
 
         if state.bibliography:
             sections.append(f"## Bibliography\n\n{state.bibliography}")
+
+        if state.acknowledgments:
+            sections.append(f"## Acknowledgments\n\n{state.acknowledgments}")
+
+        if state.about_the_author:
+            sections.append(f"## About the Author\n\n{state.about_the_author}")
+
+        if state.index_terms:
+            sections.append("## Index\n")
+            for term in state.index_terms:
+                sections.append(f"- {term}")
 
         return "\n\n".join(sections)
