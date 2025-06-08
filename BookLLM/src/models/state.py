@@ -9,6 +9,8 @@ class BookState(BaseModel):
 
     # Core metadata
     topic: str
+    book_title: Optional[str] = None
+    book_subtitle: Optional[str] = None
     target_audience: str = "beginners"
     book_style: str = "professional"
     estimated_pages: int = 100
@@ -78,6 +80,7 @@ class BookState(BaseModel):
 
     # Final content
     acknowledgments: Optional[str] = None
+    about_the_author: Optional[str] = None
     conclusion: Optional[str] = None
     appendices: Dict[str, str] = Field(default_factory=dict)
     bibliography: Optional[str] = None

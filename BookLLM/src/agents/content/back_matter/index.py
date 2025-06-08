@@ -32,12 +32,19 @@ class IndexAgent(BaseAgent):
         """
 
         index_content, _ = self.llm.call_llm(prompt)
-        state.index_terms = self._process_index(index_content)
+        state.index_terms = self._process_index(index_content, state)
         return state
 
-    def _process_index(self, index_content: str) -> List[str]:
+    def _process_index(self, index_content: str, state: BookState) -> List[str]:
         """Process and format index entries"""
         # Remove empty lines and strip whitespace
         entries = [line.strip() for line in index_content.split("\n") if line.strip()]
-        # Sort alphabetically
-        return sorted(entries)
+
+        # Add cross-references for glossary terms
+        terms_only = {e.split("(")[0].strip() for e in entries}
+        for term in state.glossary.keys():
+            if term not in terms_only:
+                entries.append(f"{term} (see Glossary)")
+
+        # Remove duplicates and sort alphabetically
+        return sorted(set(entries))

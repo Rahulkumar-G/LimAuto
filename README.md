@@ -99,6 +99,11 @@ pytest
 
 Feel free to explore the source code for more details on how each agent works.
 
+Recent updates introduced automated generation of front and back matter
+including acknowledgments, about-the-author bios, a standardized glossary,
+bibliography, and index. Citation style now defaults to APA and glossary terms
+are automatically cross-referenced in the index.
+
 ## Metrics dashboard
 
 The `frontend/` directory contains a small React component `MetricsPage.tsx`.
@@ -121,7 +126,8 @@ An example `MetricsChartSection` component is provided in
 dashboard grid layout to display latency and token usage charts.
 
 ```jsx
-import MetricsChartSection from './dashboard/src/components/MetricsChartSection';
+import './dashboard/src/components/MetricsChartSection'
+import MetricsChartSection
 
 export default function DashboardGrid() {
   return (

@@ -7,6 +7,7 @@ from ...models.state import BookState
 from ..base import BaseAgent
 from .chapter import ChapterWriterAgent
 from .outline import OutlineAgent
+from .front_matter.book_title import BookTitleAgent
 
 
 class WriterAgent(BaseAgent):
@@ -20,6 +21,11 @@ class WriterAgent(BaseAgent):
         # Initialize book structure
         state.generation_started = datetime.now()
 
+        # Generate book title if missing
+        if not state.book_title:
+            title_agent = BookTitleAgent(self.llm, self.agent_type)
+            state = title_agent.process(state)
+
         # Create outline if not exists
         if not state.outline:
             outline_agent = OutlineAgent(self.llm, self.agent_type)
@@ -27,6 +33,7 @@ class WriterAgent(BaseAgent):
 
         # Generate front matter only once
         front_matter_agents = {
+            "TitlePageAgent": "title_page",
             "ForewordAgent": "foreword",
             "DedicationAgent": "dedication",
             "EpigraphAgent": "epigraph",
@@ -46,6 +53,22 @@ class WriterAgent(BaseAgent):
         chapter_writer = ChapterWriterAgent(self.llm, self.agent_type)
         state = chapter_writer.process(state)
 
+        # Generate back matter sections
+        back_matter_agents = {
+            "AcknowledgmentsAgent": "acknowledgments",
+            "AboutAuthorAgent": "about_the_author",
+            "BibliographyAgent": "bibliography",
+            "IndexAgent": "index_terms",
+        }
+
+        for agent_name, attr in back_matter_agents.items():
+            if getattr(state, attr, None):
+                continue
+            agent_class = self._get_back_agent_class(agent_name)
+            if agent_class:
+                agent = agent_class(self.llm, self.agent_type)
+                state = agent.process(state)
+
         state.generation_completed = datetime.now()
         return state
 
@@ -58,8 +81,27 @@ class WriterAgent(BaseAgent):
             # ``src`` package. ``__package__`` resolves to ``BookLLM.src.agents.content``
             # which ensures the dynamic import works regardless of how the
             # project is executed.
-            module_base = agent_name.removesuffix("Agent") if agent_name.lower().endswith("agent") else agent_name
+            module_base = (
+                agent_name.removesuffix("Agent")
+                if agent_name.lower().endswith("agent")
+                else agent_name
+            )
             module_name = f"{__package__}.front_matter.{module_base.lower()}"
+            module = importlib.import_module(module_name)
+            return getattr(module, agent_name)
+        except (ImportError, AttributeError) as e:
+            self.logger.warning(f"Failed to load agent {agent_name}: {e}")
+            return None
+
+    def _get_back_agent_class(self, agent_name: str) -> Optional[Type[BaseAgent]]:
+        """Load back matter agent by name"""
+        try:
+            module_base = (
+                agent_name.removesuffix("Agent")
+                if agent_name.lower().endswith("agent")
+                else agent_name
+            )
+            module_name = f"{__package__}.back_matter.{module_base.lower()}"
             module = importlib.import_module(module_name)
             return getattr(module, agent_name)
         except (ImportError, AttributeError) as e:

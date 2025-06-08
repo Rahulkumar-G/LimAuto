@@ -107,7 +107,10 @@ class ChapterWriterAgent(BaseAgent):
             # Add reading time
             reading_info = self._create_reading_info(content)
 
-            return f"{nav_header}\n{reading_info}\n{content}"
+            index = state.chapters.index(title)
+            header = f"# Chapter {index + 1}: {title}"
+
+            return f"{header}\n{nav_header}\n{reading_info}\n{content}"
 
         except Exception as e:
             self.logger.error(f"Error in post-processing chapter {title}: {e}")

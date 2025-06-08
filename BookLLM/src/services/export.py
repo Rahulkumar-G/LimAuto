@@ -1,5 +1,5 @@
-import subprocess
 import shutil
+import subprocess
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List
@@ -193,8 +193,13 @@ class ExportService:
         sections = []
 
         # Front matter
-        if state.metadata.get("title"):
-            sections.append(f"# {state.metadata['title']}\n")
+        if state.title_page:
+            sections.append(state.title_page)
+        elif state.metadata.get("title"):
+            title_line = f"# {state.metadata['title']}"
+            if state.metadata.get("subtitle"):
+                title_line += f"\n\n## {state.metadata['subtitle']}"
+            sections.append(title_line)
 
         if state.preface:
             sections.append(f"## Preface\n\n{state.preface}")
@@ -225,5 +230,16 @@ class ExportService:
 
         if state.bibliography:
             sections.append(f"## Bibliography\n\n{state.bibliography}")
+
+        if state.acknowledgments:
+            sections.append(f"## Acknowledgments\n\n{state.acknowledgments}")
+
+        if state.about_the_author:
+            sections.append(f"## About the Author\n\n{state.about_the_author}")
+
+        if state.index_terms:
+            sections.append("## Index\n")
+            for term in state.index_terms:
+                sections.append(f"- {term}")
 
         return "\n\n".join(sections)
