@@ -1,3 +1,4 @@
+import json
 import logging
 import sys
 from datetime import datetime
@@ -60,3 +61,20 @@ def setup_project_logging(
 
     # Set as root logger
     logging.root = root_logger
+
+
+def log_progress_json(
+    logger: logging.Logger, agent: str, chapter: str, status: str
+) -> None:
+    """Emit a structured JSON log for progress tracking."""
+    try:
+        payload = {
+            "agent": agent,
+            "chapter": chapter,
+            "status": status,
+        }
+        logger.info(json.dumps(payload))
+    except Exception:
+        logger.info(
+            f"{{'agent': '{agent}', 'chapter': '{chapter}', 'status': '{status}'}}"
+        )
