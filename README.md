@@ -10,7 +10,7 @@ through a graph defined in `BookLLM`.
 - **Ollama** – used to run the local LLM model. Install it from [https://ollama.ai](https://ollama.ai)
   and ensure the service is running (`ollama serve`) with a model available (e.g. `ollama pull llama3.1:8b`).
 - Optional: create a virtual environment for the project.
-- **Pandoc** and **xelatex** – required for PDF export. Install a TeX distribution that includes xelatex (e.g. TeX Live).
+- **Pandoc** and **xelatex** – used for high quality PDF output. If they are not installed the program falls back to **fpdf2** for basic PDF generation.
 
 ## Installation
 
@@ -57,7 +57,9 @@ python -m BookLLM.src.main "My Book Topic" \
 
 The generated book (Markdown), metadata and token metrics will be written to the
 folder specified in the configuration (default: `book_output`). If `--pdf` is
-specified a PDF version will also be generated using Pandoc. Ensure that `xelatex` is installed or the command will fail.
+specified a PDF version will also be generated. The exporter will use Pandoc and
+`xelatex` when available, otherwise it falls back to the lightweight `fpdf2`
+library.
 
 During generation you will see a **step tracker** showing the current phase
 (e.g. `Step 1/3: Scaffolding`) and a progress bar for chapter creation. The
