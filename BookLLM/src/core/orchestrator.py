@@ -1,7 +1,7 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, List
 from threading import Lock
 
 import yaml
@@ -12,8 +12,12 @@ from ..models.state import BookState
 from ..services import ExportService
 from ..utils.logger import get_logger
 from ..utils.step_tracker import StepEvent, step_tracker
-from .graph import BookGraph
 from .workflow import BookWorkflow
+from typing import TYPE_CHECKING
+
+BookGraph = None
+if TYPE_CHECKING:  # pragma: no cover - for type hints
+    from .graph import BookGraph as _BookGraph
 
 
 class BookOrchestrator:
@@ -32,6 +36,9 @@ class BookOrchestrator:
         self.logger = get_logger(__name__)
         self.config = self._load_config(config)
         self.llm = EnhancedLLMInterface(self.config)
+        from .graph import BookGraph as GraphClass
+        global BookGraph
+        BookGraph = GraphClass
         self.graph = BookGraph(self.llm).build()
         self.workflow = BookWorkflow()
         self._active_topics = set()
@@ -160,3 +167,28 @@ class BookOrchestrator:
             self.llm.metrics.save_metrics(output_dir / "final_token_metrics.json")
         except Exception as e:
             self.logger.error(f"Failed to save final token metrics: {e}")
+
+from .types import AgentInput, AgentOutput, TOCEntry, ChapterOutput, Config
+from .base import BaseAgent
+
+
+class FinalCompilationAgent(BaseAgent):
+    """Compile processed chapters into the final document."""
+
+    def run(self, input: AgentInput) -> AgentOutput:
+        """Assemble chapters and append back matter."""
+        chapters = input.inputs or []
+        doc = f"# {self.config.book_title}\n\n**Author:** {self.config.author}\n"
+        toc: List[TOCEntry] = []
+        glossary: Dict[str, str] = {}
+        for idx, ch in enumerate(chapters, 1):
+            title = ch.metadata.get("title", f"Chapter {idx}")
+            toc.append(TOCEntry(chapter=str(idx), title=title))
+            doc += f"\n\n<a name='chapter-{idx}'></a>\n# {title}\n\n{ch.content}\n"
+            if ch.acronym_glossary:
+                glossary.update(ch.acronym_glossary)
+        if glossary:
+            doc += "\n\n## Acronym Glossary\n"
+            for tok, defi in glossary.items():
+                doc += f"- **{tok}**: {defi}\n"
+        return AgentOutput(final_doc=doc, toc=toc)
