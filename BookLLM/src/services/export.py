@@ -193,8 +193,13 @@ class ExportService:
         sections = []
 
         # Front matter
-        if state.metadata.get("title"):
-            sections.append(f"# {state.metadata['title']}\n")
+        if state.title_page:
+            sections.append(state.title_page)
+        elif state.metadata.get("title"):
+            title_line = f"# {state.metadata['title']}"
+            if state.metadata.get("subtitle"):
+                title_line += f"\n\n## {state.metadata['subtitle']}"
+            sections.append(title_line)
 
         if state.preface:
             sections.append(f"## Preface\n\n{state.preface}")
@@ -202,7 +207,7 @@ class ExportService:
         # Main content
         for i, chapter_title in enumerate(state.chapters, 1):
             content = state.chapter_map.get(chapter_title, "")
-            sections.append(f"## Chapter {i}: {chapter_title}\n\n{content}")
+            sections.append(content)
 
         # Back matter
         if state.glossary:
