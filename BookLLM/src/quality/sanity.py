@@ -7,6 +7,18 @@ CODE_BLOCK_RE = re.compile(r"```.*?```", re.DOTALL)
 JSON_RE = re.compile(r"\{[^{}]*:[^{}]*\}|\[[^\[\]]*\]", re.DOTALL)
 
 
+class SanityChecker:
+    """Utility class for sanity checks."""
+
+    @staticmethod
+    def find_unexpected_json(text: str) -> List[str]:
+        return find_unexpected_json(text)
+
+    @staticmethod
+    def check_book_content(contents: List[str]) -> List[str]:
+        return check_book_content(contents)
+
+
 def find_unexpected_json(text: str) -> List[str]:
     """Return JSON-like snippets that appear outside code blocks."""
     sanitized = CODE_BLOCK_RE.sub("", text)

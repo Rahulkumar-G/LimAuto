@@ -27,21 +27,12 @@ class BookWorkflow:
         """Define workflow steps"""
         return [
             WorkflowStep(name="outline", agent="OutlineAgent", dependencies=[]),
-            WorkflowStep(
-                name="chapters", agent="ChapterWriterAgent", dependencies=["outline"]
-            ),
-            WorkflowStep(
-                name="review", agent="ReviewerAgent", dependencies=["chapters"]
-            ),
-            WorkflowStep(
-                name="enhance", agent="ContentEnhancementAgent", dependencies=["review"]
-            ),
-            WorkflowStep(
-                name="quality", agent="QualityAssuranceAgent", dependencies=["enhance"]
-            ),
-            WorkflowStep(
-                name="compile", agent="FinalCompilationAgent", dependencies=["quality"]
-            ),
+            WorkflowStep(name="write", agent="WriterAgent", dependencies=["outline"]),
+            WorkflowStep(name="review", agent="ReviewerAgent", dependencies=["write"]),
+            WorkflowStep(name="enhance", agent="ContentEnhancementAgent", dependencies=["review"]),
+            WorkflowStep(name="acronym", agent="AcronymAgent", dependencies=["enhance"]),
+            WorkflowStep(name="quality", agent="QualityAssuranceAgent", dependencies=["acronym"]),
+            WorkflowStep(name="compile", agent="FinalCompilationAgent", dependencies=["quality"]),
         ]
 
     def start(self, state: BookState):
