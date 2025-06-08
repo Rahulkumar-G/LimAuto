@@ -23,7 +23,7 @@ def main():
     parser.add_argument(
         "--pdf",
         action="store_true",
-        help="Export the generated book to PDF (requires pandoc and xelatex)",
+        help="Export the generated book to PDF",
     )
 
     args = parser.parse_args()
@@ -31,9 +31,10 @@ def main():
     setup_logging(args.config or str(Path(__file__).resolve().parents[1] / "config.yaml"))
     logger = logging.getLogger(__name__)
 
-    if args.pdf and shutil.which("xelatex") is None:
-        logger.error("xelatex is required for PDF export but was not found. Please install a TeX distribution that provides xelatex or omit the --pdf option.")
-        return
+    if args.pdf and (shutil.which("pandoc") is None or shutil.which("xelatex") is None):
+        logger.warning(
+            "Pandoc or xelatex not found; falling back to FPDF for PDF export."
+        )
 
     # Create output directory
     output_dir = Path("book_output")
