@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Dict, List
 
 from ..models.state import BookState
+from ..utils.case_study_formatter import CaseStudyFormatter
 from ..utils.logger import get_logger
 from ..utils.style_guide import StyleGuideEnforcer
 
@@ -212,7 +213,7 @@ class ExportService:
             sections.append(f"## Chapter {i}: {chapter_title}\n\n{content}")
             case = state.case_studies.get(chapter_title)
             if case:
-                sections.append(f"### Case Study\n\n{case}")
+                sections.append(CaseStudyFormatter.format(case))
 
             questions = state.check_questions.get(chapter_title)
             if questions:
