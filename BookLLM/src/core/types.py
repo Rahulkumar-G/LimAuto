@@ -78,3 +78,11 @@ class AgentOutput:
     issues: Optional[List[str]] = None
     final_doc: Optional[str] = None
     toc: Optional[List[TOCEntry]] = None
+
+
+@dataclass
+class LabelOutput:
+    """Output from label generation."""
+
+    labeled_content: str
+    labels: Dict[str, str] = field(default_factory=dict)
