@@ -1,4 +1,5 @@
 # Step 1: Export utility helpers
+from .case_study_formatter import CaseStudyFormatter
 from .logger import get_logger, log_progress_json
 from .metrics import QualityMetricsTracker, TokenMetricsTracker
 from .step_tracker import StepTracker, step_tracker
@@ -12,4 +13,5 @@ __all__ = [
     "StepTracker",
     "step_tracker",
     "StyleGuideEnforcer",
+    "CaseStudyFormatter",
 ]
