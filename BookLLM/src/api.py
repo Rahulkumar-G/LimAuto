@@ -1,15 +1,44 @@
 from pathlib import Path
 import json
 import yaml
+import importlib
+from typing import Dict, Type
 from flask import Flask, jsonify, request
 
 from .core import BookOrchestrator
 from .utils.metrics import TokenMetricsTracker
+from .agents.base import BaseAgent
 
 app = Flask(__name__)
 
 # Default config path within the package
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.yaml"
+
+
+def _discover_agents() -> Dict[str, Type[BaseAgent]]:
+    """Dynamically discover available agent classes."""
+    packages = [
+        "BookLLM.src.agents.content",
+        "BookLLM.src.agents.content.back_matter",
+        "BookLLM.src.agents.content.front_matter",
+        "BookLLM.src.agents.enhancement",
+        "BookLLM.src.agents.review",
+    ]
+    registry: Dict[str, Type[BaseAgent]] = {}
+    for pkg_name in packages:
+        try:
+            pkg = importlib.import_module(pkg_name)
+            for name in getattr(pkg, "__all__", []):
+                cls = getattr(pkg, name, None)
+                if isinstance(cls, type):
+                    registry[name] = cls
+        except Exception:
+            continue
+    return registry
+
+
+AGENT_REGISTRY = _discover_agents()
+
 
 # Path for the metrics file determined from configuration
 def _metrics_file_path() -> Path:
@@ -51,6 +80,35 @@ def get_metrics():
     tracker = TokenMetricsTracker()
     tracker.metrics = data
     return jsonify(tracker.get_summary())
+
+
+@app.route("/api/agents", methods=["GET"])
+def list_agents():
+    """Return available agent names."""
+    return jsonify(sorted(AGENT_REGISTRY.keys()))
+
+
+@app.route("/api/dispatch", methods=["POST"])
+def dispatch_prompt():
+    """Send a prompt to a selected agent and return the response."""
+    data = request.get_json(force=True)
+    agent_name = data.get("agent")
+    prompt = data.get("prompt", "").strip()
+    if not agent_name or not prompt:
+        return jsonify({"error": "'agent' and 'prompt' required"}), 400
+
+    cls = AGENT_REGISTRY.get(agent_name)
+    if not cls:
+        return jsonify({"error": f"Unknown agent: {agent_name}"}), 400
+
+    # For this lightweight API we simply echo the prompt rather than invoking
+    # heavy LLM pipelines which require external dependencies.
+    try:
+        response = f"[{agent_name}] {prompt}"
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    return jsonify({"response": response})
 
 
 @app.route("/health", methods=["GET"])
