@@ -1,4 +1,4 @@
-from datetime import datetime
+from pathlib import Path
 
 from ....models.agent_type import AgentType
 from ....models.state import BookState
@@ -13,24 +13,17 @@ class TitlePageAgent(BaseAgent):
 
     def _execute_logic(self, state: BookState) -> BookState:
         """Generate the book's title page"""
-        prompt = f"""
-        Create a professional title page for book:
-        
-        Title: {state.book_title or state.topic}
-        Subtitle: {state.book_subtitle or ''}
-        Style: {state.book_style}
-        Audience: {state.target_audience}
-        
-        Include:
-        - Main title
-        - Subtitle (if appropriate)
-        - Author name/pseudonym
-        - Edition information: {state.edition}
-        - Publisher info (if available)
-        - Copyright year: {datetime.now().year}
-        
-        Format in standard title page layout.
-        """
+        title = state.book_title or state.topic
+        author = state.metadata.get("author", "Unknown")
 
-        state.title_page, _ = self.llm.call_llm(prompt)
+        maketitle = f"\\title{{{title}}}\n\\author{{{author}}}\n\\maketitle\n"
+        state.title_page = maketitle
+
+        output_dir = Path(self.llm.system_config.output_dir)
+        tex_path = output_dir / "title.tex"
+        try:
+            tex_path.write_text(maketitle)
+        except Exception as e:
+            self.logger.warning(f"Failed to write title.tex: {e}")
+
         return state
