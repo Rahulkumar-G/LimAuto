@@ -53,6 +53,15 @@ class WriterAgent(BaseAgent):
         chapter_writer = ChapterWriterAgent(self.llm, self.agent_type)
         state = chapter_writer.process(state)
 
+        # Link glossary terms on first occurrence
+        try:
+            from ..enhancement.glossary_linker import GlossaryLinker
+
+            linker = GlossaryLinker(self.llm, self.agent_type)
+            state = linker.process(state)
+        except Exception as e:
+            self.logger.warning(f"Glossary linking failed: {e}")
+
         # Generate back matter sections
         back_matter_agents = {
             "AcknowledgmentsAgent": "acknowledgments",
@@ -68,6 +77,15 @@ class WriterAgent(BaseAgent):
             if agent_class:
                 agent = agent_class(self.llm, self.agent_type)
                 state = agent.process(state)
+
+                if agent_name == "IndexAgent":
+                    try:
+                        from ..enhancement.index_sanitizer import IndexSanitizerAgent
+
+                        sanitizer = IndexSanitizerAgent(self.llm, self.agent_type)
+                        state = sanitizer.process(state)
+                    except Exception as e:
+                        self.logger.warning(f"Index sanitization failed: {e}")
 
         state.generation_completed = datetime.now()
         return state
