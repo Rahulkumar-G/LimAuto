@@ -86,29 +86,9 @@ class BookGraph:
                 def _inner(state: BookState):
                     if step_name in state.completed_steps:
                         return state
-                    input_data = AgentInput(
-                        content=state.compiled_book or "\n".join(state.chapters),
-                        metadata=state.metadata,
-                        outline=None,
-                    )
-                    result = a.run(input_data)
-                    if result.corrected_text:
-                        state.compiled_book = result.corrected_text
-                    if result.enhanced_content:
-                        state.compiled_book = result.enhanced_content
-                    if result.resolved_content:
-                        state.compiled_book = result.resolved_content
-                    if result.acronym_glossary:
-                        state.acronyms.update(result.acronym_glossary)
-                    if result.final_doc:
-                        state.compiled_book = result.final_doc
-                        if result.toc:
-                            state.table_of_contents = "\n".join(
-                                f"{e.chapter}. {e.title}" for e in result.toc
-                            )
-                    if result.is_valid is not None:
-                        state.metadata.setdefault("qa", {})["is_valid"] = result.is_valid
-                        state.metadata.setdefault("qa", {})["issues"] = result.issues
+
+                    # Legacy agents operate directly on BookState
+                    state = a.process(state)
                     state.current_step = step_name
                     if step_name not in state.completed_steps:
                         state.completed_steps.append(step_name)
