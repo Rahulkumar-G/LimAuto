@@ -27,3 +27,17 @@ class AcronymAgent(BaseAgent):
             )
             content += f"\n\n## Acronym Glossary\n{glossary_section}\n"
         return AgentOutput(resolved_content=content, acronym_glossary=glossary)
+
+    def process(self, state: "BookState") -> "BookState":
+        """Expand acronyms across the book."""
+        from ...models.state import BookState
+
+        if not isinstance(state, BookState):
+            return state
+
+        combined = "\n\n".join(state.chapter_map.values())
+        output = self.run(AgentInput(content=combined))
+        if output.acronym_glossary:
+            state.acronyms.update(output.acronym_glossary)
+        # This simple implementation does not update chapter text
+        return state

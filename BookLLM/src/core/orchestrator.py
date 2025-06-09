@@ -236,3 +236,22 @@ class FinalCompilationAgent(BaseAgent):
             for tok, defi in glossary.items():
                 doc += f"- **{tok}**: {defi}\n"
         return AgentOutput(final_doc=doc, toc=toc)
+
+    def process(self, state: "BookState") -> "BookState":
+        """Compile chapters from the book state into a single document."""
+        from .types import ChapterOutput
+        from ..models.state import BookState
+
+        if not isinstance(state, BookState):
+            return state
+
+        chapters = [
+            ChapterOutput(content=c, metadata={"title": t})
+            for t, c in state.chapter_map.items()
+        ]
+        output = self.run(AgentInput(inputs=chapters))
+        if output.final_doc:
+            state.compiled_book = output.final_doc
+        if output.toc:
+            state.metadata["toc"] = [e.__dict__ for e in output.toc]
+        return state
