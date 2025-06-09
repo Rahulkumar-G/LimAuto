@@ -1,13 +1,15 @@
 from pathlib import Path
 import json
 import yaml
+from flask import Flask, jsonify, request, Response
+
 import importlib
 from typing import Dict, Type
-from flask import Flask, jsonify, request
 
 from .core import BookOrchestrator
 from .utils.metrics import TokenMetricsTracker
 from .agents.base import BaseAgent
+from .monitoring import status_updates
 
 app = Flask(__name__)
 
@@ -114,6 +116,16 @@ def dispatch_prompt():
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok"})
+
+
+@app.route("/events/agent-status")
+def agent_status_events():
+    def generate():
+        while True:
+            payload = status_updates.get()
+            yield f"data: {json.dumps(payload)}\n\n"
+
+    return Response(generate(), mimetype="text/event-stream")
 
 
 if __name__ == "__main__":
