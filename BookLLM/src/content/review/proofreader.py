@@ -46,3 +46,21 @@ class ReviewerAgent(BaseAgent):
             offset += len(sentence) + 1
         corrected_text = " ".join(corrected_parts)
         return AgentOutput(corrected_text=corrected_text, suggestions=suggestions)
+
+    def process(self, state: "BookState") -> "BookState":
+        """Apply the reviewer to each chapter in the book state."""
+        from ...models.state import BookState  # Local import to avoid circular deps
+
+        if not isinstance(state, BookState):
+            return state
+
+        for chapter, content in state.chapter_map.items():
+            output = self.run(AgentInput(content=content, metadata={"chapter": chapter}))
+            if output.corrected_text:
+                state.chapter_map[chapter] = output.corrected_text
+            if output.suggestions:
+                state.metadata.setdefault("review_suggestions", {})[chapter] = [
+                    s.__dict__ for s in output.suggestions
+                ]
+
+        return state
