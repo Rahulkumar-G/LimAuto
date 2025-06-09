@@ -1,8 +1,8 @@
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Optional, List
 from threading import Lock
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 import yaml
 
@@ -13,7 +13,6 @@ from ..services import ExportService
 from ..utils.logger import get_logger
 from ..utils.step_tracker import StepEvent, step_tracker
 from .workflow import BookWorkflow
-from typing import TYPE_CHECKING
 
 BookGraph = None
 if TYPE_CHECKING:  # pragma: no cover - for type hints
@@ -47,6 +46,7 @@ class BookOrchestrator:
         self.checkpoint_path = self.output_dir / "checkpoint.json"
 
         from .graph import BookGraph as GraphClass
+
         global BookGraph
         BookGraph = GraphClass
         self.graph = BookGraph(self.llm, save_callback=self._save_checkpoint).build()
@@ -67,7 +67,9 @@ class BookOrchestrator:
         try:
             # Step 1: Initialize or resume state
             if resume:
-                state = self._load_checkpoint() or self._create_initial_state(topic, **kwargs)
+                state = self._load_checkpoint() or self._create_initial_state(
+                    topic, **kwargs
+                )
             else:
                 state = self._create_initial_state(topic, **kwargs)
 
@@ -203,17 +205,24 @@ class BookOrchestrator:
             self.logger.error(f"Failed to load checkpoint: {e}")
         return None
 
-from .types import AgentInput, AgentOutput, TOCEntry, ChapterOutput, Config
+
 from .base import BaseAgent
+from .types import AgentInput, AgentOutput, ChapterOutput, Config, TOCEntry
 
 
 class FinalCompilationAgent(BaseAgent):
     """Compile processed chapters into the final document."""
 
     def run(self, input: AgentInput) -> AgentOutput:
-        """Assemble chapters and append back matter."""
+        """Assemble chapters and append table of contents and back matter."""
         chapters = input.inputs or []
+        toc_md = ""
+        if input.metadata and "toc_markdown" in input.metadata:
+            toc_md = input.metadata["toc_markdown"].strip()
+
         doc = f"# {self.config.book_title}\n\n**Author:** {self.config.author}\n"
+        if toc_md:
+            doc = f"{toc_md}\n\n" + doc
         toc: List[TOCEntry] = []
         glossary: Dict[str, str] = {}
         for idx, ch in enumerate(chapters, 1):
