@@ -3,9 +3,9 @@ from __future__ import annotations
 import re
 from typing import Set
 
-from ....models.agent_type import AgentType
-from ....models.state import BookState
-from ...base import BaseAgent
+from ...models.agent_type import AgentType
+from ...models.state import BookState
+from ..base import BaseAgent
 
 
 class GlossaryLinker(BaseAgent):

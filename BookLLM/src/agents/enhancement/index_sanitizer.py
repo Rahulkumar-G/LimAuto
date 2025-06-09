@@ -3,9 +3,9 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Set
 
-from ....models.agent_type import AgentType
-from ....models.state import BookState
-from ...base import BaseAgent
+from ...models.agent_type import AgentType
+from ...models.state import BookState
+from ..base import BaseAgent
 
 
 class IndexSanitizerAgent(BaseAgent):
