@@ -36,15 +36,25 @@ class BookOrchestrator:
         self.logger = get_logger(__name__)
         self.config = self._load_config(config)
         self.llm = EnhancedLLMInterface(self.config)
+        system_cfg = self.config.get("system", {})
+        output_dir = (
+            system_cfg.output_dir
+            if hasattr(system_cfg, "output_dir")
+            else system_cfg.get("output_dir", "./book_output")
+        )
+        self.output_dir = Path(output_dir)
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        self.checkpoint_path = self.output_dir / "checkpoint.json"
+
         from .graph import BookGraph as GraphClass
         global BookGraph
         BookGraph = GraphClass
-        self.graph = BookGraph(self.llm).build()
+        self.graph = BookGraph(self.llm, save_callback=self._save_checkpoint).build()
         self.workflow = BookWorkflow()
         self._active_topics = set()
         self._lock = Lock()
 
-    def generate_book(self, topic: str, **kwargs) -> BookState:
+    def generate_book(self, topic: str, resume: bool = False, **kwargs) -> BookState:
         """Execute full book generation process"""
         with self._lock:
             if topic in self._active_topics:
@@ -55,12 +65,16 @@ class BookOrchestrator:
             self._active_topics.add(topic)
 
         try:
-            # Step 1: Initialize state
-            initial_state = self._create_initial_state(topic, **kwargs)
+            # Step 1: Initialize or resume state
+            if resume:
+                state = self._load_checkpoint() or self._create_initial_state(topic, **kwargs)
+            else:
+                state = self._create_initial_state(topic, **kwargs)
+
             step_tracker.dispatch(StepEvent("Scaffolding"))
 
             # Step 2: Start workflow
-            state = self.workflow.start(initial_state)
+            state = self.workflow.start(state)
 
             # Step 3: Execute graph
             self.logger.info(f"Starting book generation for: {topic}")
@@ -83,6 +97,8 @@ class BookOrchestrator:
             # Step 5: Save artifacts
             self._save_artifacts(final_state)
             step_tracker.dispatch(StepEvent("Styling"))
+            if self.checkpoint_path.exists():
+                self.checkpoint_path.unlink()
 
             return final_state
 
@@ -167,6 +183,25 @@ class BookOrchestrator:
             self.llm.metrics.save_metrics(output_dir / "final_token_metrics.json")
         except Exception as e:
             self.logger.error(f"Failed to save final token metrics: {e}")
+
+    def _save_checkpoint(self, state: BookState) -> None:
+        """Persist intermediate state for resuming later."""
+        try:
+            with open(self.checkpoint_path, "w") as f:
+                json.dump(state.model_dump(), f, indent=2, default=str)
+        except Exception as e:
+            self.logger.error(f"Failed to save checkpoint: {e}")
+
+    def _load_checkpoint(self) -> Optional[BookState]:
+        """Load previously saved state if available."""
+        try:
+            if self.checkpoint_path.exists():
+                with open(self.checkpoint_path) as f:
+                    data = json.load(f)
+                return BookState(**data)
+        except Exception as e:
+            self.logger.error(f"Failed to load checkpoint: {e}")
+        return None
 
 from .types import AgentInput, AgentOutput, TOCEntry, ChapterOutput, Config
 from .base import BaseAgent

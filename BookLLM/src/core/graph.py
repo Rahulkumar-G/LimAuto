@@ -1,4 +1,5 @@
 from typing import Any, Dict, List
+from datetime import datetime
 
 from langgraph.graph import END, StateGraph
 
@@ -16,10 +17,11 @@ from .types import Config, AgentInput
 class BookGraph:
     """Manages the book generation workflow graph"""
 
-    def __init__(self, llm):
+    def __init__(self, llm, save_callback=None):
         self.llm = llm
         self.graph = StateGraph(BookState)
         self.agents = self._initialize_agents()
+        self.save_callback = save_callback
 
     def build(self) -> StateGraph:
         """Build and compile the workflow graph"""
@@ -66,9 +68,15 @@ class BookGraph:
         """Create graph nodes from agents"""
         nodes = {}
         for name, agent in self.agents.items():
-            def make_func(a):
+            def make_func(a, step_name):
                 def _inner(state: BookState):
-                    input_data = AgentInput(content=state.compiled_book or "\n".join(state.chapters), metadata=state.metadata, outline=None)
+                    if step_name in state.completed_steps:
+                        return state
+                    input_data = AgentInput(
+                        content=state.compiled_book or "\n".join(state.chapters),
+                        metadata=state.metadata,
+                        outline=None,
+                    )
                     result = a.run(input_data)
                     if result.corrected_text:
                         state.compiled_book = result.corrected_text
@@ -81,15 +89,23 @@ class BookGraph:
                     if result.final_doc:
                         state.compiled_book = result.final_doc
                         if result.toc:
-                            state.table_of_contents = "\n".join(f"{e.chapter}. {e.title}" for e in result.toc)
+                            state.table_of_contents = "\n".join(
+                                f"{e.chapter}. {e.title}" for e in result.toc
+                            )
                     if result.is_valid is not None:
                         state.metadata.setdefault("qa", {})["is_valid"] = result.is_valid
                         state.metadata.setdefault("qa", {})["issues"] = result.issues
+                    state.current_step = step_name
+                    if step_name not in state.completed_steps:
+                        state.completed_steps.append(step_name)
+                    state.last_modified = datetime.now()
+                    if self.save_callback:
+                        self.save_callback(state)
                     return state
 
                 return _inner
 
-            nodes[f"{name}_node"] = make_func(agent)
+            nodes[f"{name}_node"] = make_func(agent, name)
         return nodes
 
     def _define_workflow(self) -> List[str]:
