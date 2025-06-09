@@ -1,6 +1,12 @@
 from typing import Any, Dict, List
 from datetime import datetime
 
+from BookLLM.src.agents.content.chapter import ChapterWriterAgent
+from BookLLM.src.agents.enhancement.case_study import CaseStudyAgent
+from BookLLM.src.agents.enhancement.glossary import GlossaryAgent
+from BookLLM.src.agents.enhancement.quiz import QuizAgent
+from BookLLM.src.agents.enhancement.template import TemplateAgent
+from BookLLM.src.agents.review.proofreader import ProofreaderAgent
 from langgraph.graph import END, StateGraph
 
 from ..agents.content import OutlineAgent, WriterAgent
@@ -62,6 +68,14 @@ class BookGraph:
             "acronym": AcronymAgent(cfg),
             "quality": QualityAssuranceAgent(cfg),
             "final": FinalCompilationAgent(cfg),
+            "chapter": ChapterWriterAgent(self.llm, AgentType.CONTENT_CREATOR),
+            "proofreader": ProofreaderAgent(self.llm, AgentType.REVIEWER),
+            "glossary": GlossaryAgent(self.llm, AgentType.ENHANCER),
+            # "code": CodeSampleAgent(self.llm, AgentType.ENHANCER),
+            "case": CaseStudyAgent(self.llm, AgentType.ENHANCER),
+            "quiz": QuizAgent(self.llm, AgentType.ENHANCER),
+            "template": TemplateAgent(self.llm, AgentType.ENHANCER),
+
         }
 
     def _create_nodes(self) -> Dict[str, callable]:
@@ -118,4 +132,11 @@ class BookGraph:
             "acronym_node",
             "quality_node",
             "final_node",
+            "chapter_node",
+            "glossary_node",
+            # "code_node",
+            "case_node",
+            "quiz_node",
+            "template_node",
+            "proofreader_node",
         ]

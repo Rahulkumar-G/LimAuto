@@ -28,6 +28,6 @@ resources:
 
 # Optional cost tracking (local deployment)
 cost:
-  cost_per_input_token: 0.0
-  cost_per_output_token: 0.0
+  cost_per_input_token: 0.00000060
+  cost_per_output_token: 0.0000024 
   cost_per_request: 0.0
