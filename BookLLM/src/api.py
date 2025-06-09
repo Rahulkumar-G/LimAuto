@@ -1,10 +1,11 @@
 from pathlib import Path
 import json
 import yaml
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, Response
 
 from .core import BookOrchestrator
 from .utils.metrics import TokenMetricsTracker
+from .monitoring import status_updates
 
 app = Flask(__name__)
 
@@ -56,6 +57,16 @@ def get_metrics():
 @app.route("/health", methods=["GET"])
 def health():
     return jsonify({"status": "ok"})
+
+
+@app.route("/events/agent-status")
+def agent_status_events():
+    def generate():
+        while True:
+            payload = status_updates.get()
+            yield f"data: {json.dumps(payload)}\n\n"
+
+    return Response(generate(), mimetype="text/event-stream")
 
 
 if __name__ == "__main__":
