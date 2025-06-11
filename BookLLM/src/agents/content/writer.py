@@ -1,4 +1,5 @@
 import importlib
+import re
 from datetime import datetime
 from typing import Optional, Type
 
@@ -8,6 +9,11 @@ from ..base import BaseAgent
 from .chapter import ChapterWriterAgent
 from .outline import OutlineAgent
 from .front_matter.book_title import BookTitleAgent
+
+
+def _camel_to_snake(name: str) -> str:
+    """Convert CamelCase names to snake_case."""
+    return re.sub(r"(?<!^)(?=[A-Z])", "_", name).lower()
 
 
 class WriterAgent(BaseAgent):
@@ -104,7 +110,7 @@ class WriterAgent(BaseAgent):
                 if agent_name.lower().endswith("agent")
                 else agent_name
             )
-            module_name = f"{__package__}.front_matter.{module_base.lower()}"
+            module_name = f"{__package__}.front_matter.{_camel_to_snake(module_base)}"
             module = importlib.import_module(module_name)
             return getattr(module, agent_name)
         except (ImportError, AttributeError) as e:
@@ -119,7 +125,7 @@ class WriterAgent(BaseAgent):
                 if agent_name.lower().endswith("agent")
                 else agent_name
             )
-            module_name = f"{__package__}.back_matter.{module_base.lower()}"
+            module_name = f"{__package__}.back_matter.{_camel_to_snake(module_base)}"
             module = importlib.import_module(module_name)
             return getattr(module, agent_name)
         except (ImportError, AttributeError) as e:
