@@ -42,7 +42,12 @@ def main():
 
     # Load config if provided, otherwise use default config
     default_config = {
-        "model": {"name": "gpt-4", "temperature": 0.7, "max_tokens": 2000},
+        "model": {
+            "provider": "openai",
+            "name": "gpt-4",
+            "temperature": 0.7,
+            "max_tokens": 2000,
+        },
         "system": {"output_dir": str(output_dir)},
     }
 

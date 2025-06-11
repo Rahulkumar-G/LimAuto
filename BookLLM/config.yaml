@@ -1,5 +1,6 @@
 # Model configuration for Llama2 8B
 model:
+  provider: "ollama"
   name: "llama3.1:8b"  # Use the specific model name as defined in Ollama
   temperature: 0.7   # Conservative temperature for more stable output
   max_tokens: 8192   # Context window for Llama2 8B
