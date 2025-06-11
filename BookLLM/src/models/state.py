@@ -77,6 +77,7 @@ class BookState(BaseModel):
     generation_completed: Optional[datetime] = None
     last_modified: Optional[datetime] = None
     version: str = "1.0.0"
+    agent_start_times: Dict[str, str] = Field(default_factory=dict)
 
     # Final content
     acknowledgments: Optional[str] = None

@@ -38,6 +38,7 @@ Key options include:
 
 - `model.name` – the Ollama model to use.
 - `system.output_dir` – where generated files are saved.
+- `system.agent_sequence` – list of agents to run in order.
 
 ## Usage
 
@@ -75,6 +76,12 @@ Start the API server:
 python -m BookLLM.src.api
 ```
 
+To serve both the backend API and a static UI in one step run:
+
+```bash
+python run_combined.py
+```
+
 Generate a book via API:
 
 ```bash
@@ -110,6 +117,9 @@ are automatically cross-referenced in the index.
 The `frontend/` directory contains a small React component `MetricsPage.tsx`.
 It visualizes success vs. failure as a pie chart and shows a 24‑hour trendline
 with stacked areas using Recharts.
+
+`AgentStatusPanel.tsx` retrieves `/api/agent-starts` so you can view when each
+agent began executing.
 
 ## Documentation
 Comprehensive documentation lives in the [docs/](docs/) directory. If you find an issue, please report it on the [issue tracker](https://github.com/yourorg/langgraphbook/issues).
