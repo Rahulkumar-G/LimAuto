@@ -31,12 +31,14 @@ through a graph defined in `BookLLM`.
 ## Configuration
 
 A sample configuration file is provided at `BookLLM/config.yaml`. It defines the
-LLM model name, system options and cost tracking. You can modify this file or
-pass a different YAML file when running the program.
+LLM provider, model name, system options and cost tracking. You can modify this
+file or pass a different YAML file when running the program.
 
 Key options include:
 
-- `model.name` – the Ollama model to use.
+- `model.provider` – either `ollama` for local models or `openai` for the
+  OpenAI API.
+- `model.name` – the model name (e.g. `llama3.1:8b`, `gpt-4o`).
 - `system.output_dir` – where generated files are saved.
 
 ## Usage
