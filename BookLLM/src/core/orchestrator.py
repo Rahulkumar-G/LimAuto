@@ -34,7 +34,13 @@ class BookOrchestrator:
         """
         self.logger = get_logger(__name__)
         self.config = self._load_config(config)
-        self.llm = EnhancedLLMInterface(self.config)
+        provider = self.config.get("model", {}).get("provider", "ollama")
+        if provider == "openai":
+            from ..interfaces.openai_interface import OpenAIInterface
+
+            self.llm = OpenAIInterface(self.config)
+        else:
+            self.llm = EnhancedLLMInterface(self.config)
         system_cfg = self.config.get("system", {})
         output_dir = (
             system_cfg.output_dir
