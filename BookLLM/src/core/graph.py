@@ -11,6 +11,7 @@ from langgraph.graph import END, StateGraph
 
 from ..agents.content import OutlineAgent, WriterAgent
 from ..models.agent_type import AgentType
+from ..monitoring import mark_start
 from ..models.state import BookState
 from ..content.review.proofreader import ReviewerAgent
 from ..content.enhancement.enhancer import ContentEnhancementAgent
@@ -60,7 +61,7 @@ class BookGraph:
     def _initialize_agents(self) -> Dict[str, Any]:
         """Initialize all required agents for the simplified pipeline."""
         cfg = Config()
-        return {
+        all_agents = {
             "outline": OutlineAgent(self.llm, AgentType.CONTENT_CREATOR),
             "writer": WriterAgent(self.llm, AgentType.CONTENT_CREATOR),
             "reviewer": ReviewerAgent(cfg),
@@ -75,8 +76,12 @@ class BookGraph:
             "case": CaseStudyAgent(self.llm, AgentType.ENHANCER),
             "quiz": QuizAgent(self.llm, AgentType.ENHANCER),
             "template": TemplateAgent(self.llm, AgentType.ENHANCER),
-
         }
+
+        seq = getattr(getattr(self.llm, "system_config", None), "agent_sequence", None)
+        if seq:
+            return {name: all_agents[name] for name in seq if name in all_agents}
+        return all_agents
 
     def _create_nodes(self) -> Dict[str, callable]:
         """Create graph nodes from agents"""
@@ -86,6 +91,10 @@ class BookGraph:
                 def _inner(state: BookState):
                     if step_name in state.completed_steps:
                         return state
+
+                    if step_name not in state.agent_start_times:
+                        mark_start(step_name)
+                        state.agent_start_times[step_name] = datetime.now().isoformat()
 
                     # Legacy agents operate directly on BookState
                     state = a.process(state)
@@ -104,6 +113,9 @@ class BookGraph:
 
     def _define_workflow(self) -> List[str]:
         """Define the workflow sequence"""
+        seq = getattr(getattr(self.llm, "system_config", None), "agent_sequence", None)
+        if seq:
+            return [f"{name}_node" for name in seq]
         return [
             "outline_node",
             "writer_node",
