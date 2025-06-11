@@ -7,6 +7,7 @@ from pathlib import Path
 class ModelConfig:
     """Configuration for the LLM model"""
 
+    provider: str = "ollama"
     name: str = "llama2"
     temperature: float = 0.7
     max_tokens: int = 4096
