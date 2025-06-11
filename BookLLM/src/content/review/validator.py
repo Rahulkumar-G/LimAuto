@@ -47,3 +47,17 @@ class QualityAssuranceAgent(BaseAgent):
 
         is_valid = len(issues) == 0
         return AgentOutput(is_valid=is_valid, issues=issues)
+
+    def process(self, state: "BookState") -> "BookState":
+        """Validate the compiled book content."""
+        from ...models.state import BookState
+
+        if not isinstance(state, BookState):
+            return state
+
+        combined = "\n\n".join(state.chapter_map.values())
+        result = self.run(AgentInput(content=combined))
+        state.metadata["qa_passed"] = result.is_valid
+        if result.issues:
+            state.warnings.extend(result.issues)
+        return state
