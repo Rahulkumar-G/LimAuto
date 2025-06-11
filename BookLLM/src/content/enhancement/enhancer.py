@@ -54,3 +54,21 @@ class ContentEnhancementAgent(BaseAgent):
                 )
             )
         return AgentOutput(enhanced_content=text, added_elements=added)
+
+    def process(self, state: "BookState") -> "BookState":
+        """Enhance each chapter using the run logic."""
+        from ...models.state import BookState  # Avoid circular import
+
+        if not isinstance(state, BookState):
+            return state
+
+        for chapter, content in state.chapter_map.items():
+            output = self.run(AgentInput(content=content))
+            if output.enhanced_content:
+                state.chapter_map[chapter] = output.enhanced_content
+            if output.added_elements:
+                state.metadata.setdefault("enhanced_elements", {})[chapter] = [
+                    e.__dict__ for e in output.added_elements
+                ]
+
+        return state
