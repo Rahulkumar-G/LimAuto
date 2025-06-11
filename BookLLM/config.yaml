@@ -18,6 +18,20 @@ system:
   max_workers: 1    # Reduced workers for 8B model to prevent OOM
   save_intermediates: true
   backup_frequency: 5
+  agent_sequence:
+    - outline
+    - writer
+    - reviewer
+    - enhancer
+    - acronym
+    - quality
+    - final
+    - chapter
+    - glossary
+    - case
+    - quiz
+    - template
+    - proofreader
 
 # Resource management for 8B model
 resources:

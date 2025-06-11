@@ -38,6 +38,7 @@ class SystemConfig:
     save_intermediates: bool = True
     backup_frequency: int = 5
     max_steps: int = 50
+    agent_sequence: list[str] | None = None
 
     def __post_init__(self):
         # Ensure output_dir is a Path object

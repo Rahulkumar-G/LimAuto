@@ -9,7 +9,7 @@ from typing import Dict, Type
 from .core import BookOrchestrator
 from .utils.metrics import TokenMetricsTracker
 from .agents.base import BaseAgent
-from .monitoring import status_updates
+from .monitoring import status_updates, agent_start_times
 
 app = Flask(__name__)
 
@@ -88,6 +88,12 @@ def get_metrics():
 def list_agents():
     """Return available agent names."""
     return jsonify(sorted(AGENT_REGISTRY.keys()))
+
+
+@app.route("/api/agent-starts", methods=["GET"])
+def get_agent_starts():
+    """Return start timestamps for agents."""
+    return jsonify(agent_start_times)
 
 
 @app.route("/api/dispatch", methods=["POST"])
