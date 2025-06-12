@@ -1,6 +1,7 @@
 from ...models.agent_type import AgentType
 from ...models.state import BookState
 from ..base import BaseAgent
+import re
 
 
 class TemplateAgent(BaseAgent):
@@ -29,4 +30,12 @@ class TemplateAgent(BaseAgent):
         Chapter excerpt: {content[:1000]}...
         """
         response, _ = self.llm.call_llm(prompt)
-        state.templates[chapter_title] = response.strip()
+        # Remove placeholder download lines like "Downloadable Worksheet:" or
+        # "Download this template as a PDF:" if no actual link is provided.
+        cleaned = re.sub(
+            r"(?im)^\s*(Downloadable Worksheet:|Download this template as a PDF:).*?$",
+            "",
+            response,
+        )
+        cleaned = re.sub(r"\n{2,}", "\n\n", cleaned).strip()
+        state.templates[chapter_title] = cleaned
