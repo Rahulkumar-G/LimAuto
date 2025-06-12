@@ -84,7 +84,7 @@ class DummyLLM:
         if "check your understanding" in prompt.lower():
             return '["Q1","Q2"]', {}
         if "downloadable worksheet" in prompt.lower() or "template" in prompt.lower():
-            return "Template", {}
+            return "Downloadable Worksheet: link to downloadable PDF\n\nTemplate", {}
         if "acknowledgments" in prompt.lower():
             return "Thanks to everyone", {}
         if "biography" in prompt.lower() or "about the author" in prompt.lower():
@@ -133,6 +133,9 @@ def test_agent_workflow():
     template_agent = TemplateAgent(dummy_llm)
     state = template_agent._execute_logic(state)
     assert state.templates
+    for tpl in state.templates.values():
+        assert "Downloadable Worksheet" not in tpl
+        assert "Download this template as a PDF" not in tpl
     ack_agent = AcknowledgmentsAgent(dummy_llm)
     state = ack_agent._execute_logic(state)
     assert state.acknowledgments == "Thanks to everyone"
