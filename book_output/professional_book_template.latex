@@ -1,0 +1,169 @@
+
+\documentclass[$if(fontsize)$$fontsize$,$endif$$if(lang)$$babel-lang$,$endif$$if(papersize)$$papersize$paper,$endif$$for(classoption)$$classoption$$sep$,$endfor$]{$documentclass$}
+
+% Professional book packages
+\usepackage{lmodern}
+\usepackage{amsmath,amsfonts,amssymb}
+\usepackage{longtable}
+\usepackage{booktabs}
+\usepackage{array}
+\usepackage{calc}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+
+% Professional page layout
+\usepackage{geometry}
+\geometry{
+  left=1.25in,
+  right=1.25in,
+  top=1.5in,
+  bottom=1.5in,
+  headheight=0.5in,
+  headsep=0.3in,
+  footskip=0.5in
+}
+
+% Headers and footers
+\usepackage{fancyhdr}
+\pagestyle{fancy}
+\fancyhf{} % Clear all header and footer fields
+
+% Header configuration
+\fancyhead[LE]{\textit{\leftmark}} % Even pages: chapter title
+\fancyhead[RO]{\textit{\rightmark}} % Odd pages: section title
+
+% Footer configuration - Book title and page number
+\fancyfoot[LE]{\textit{Navigating Regulatory Complexity} \hfill \thepage} % Even pages
+\fancyfoot[RO]{\thepage \hfill \textit{Navigating Regulatory Complexity}} % Odd pages
+
+% Chapter pages style
+\fancypagestyle{plain}{
+  \fancyhf{}
+  \fancyfoot[C]{\textit{Navigating Regulatory Complexity} \hfill \thepage}
+  \renewcommand{\headrulewidth}{0pt}
+  \renewcommand{\footrulewidth}{0.4pt}
+}
+
+% Header/footer line thickness
+\renewcommand{\headrulewidth}{0.4pt}
+\renewcommand{\footrulewidth}{0.4pt}
+
+% Professional typography
+\usepackage{microtype}
+\usepackage{setspace}
+\setstretch{1.15}
+
+% Enhanced chapter formatting
+\usepackage{titlesec}
+\titleformat{\chapter}[display]
+  {\normalfont\huge\bfseries}
+  {\chaptertitlename\ \thechapter}
+  {20pt}
+  {\Huge}
+\titlespacing*{\chapter}{0pt}{50pt}{40pt}
+
+% Professional table of contents
+\usepackage{tocloft}
+\renewcommand{\cftchapfont}{\bfseries}
+\renewcommand{\cfttoctitlefont}{\huge\bfseries}
+\setlength{\cftbeforetoctitleskip}{50pt}
+\setlength{\cftaftertoctitleskip}{40pt}
+
+% Code highlighting
+\usepackage{listings}
+\usepackage{xcolor}
+\lstset{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  frame=single,
+  numbers=left,
+  numbersep=5pt,
+  numberstyle=\tiny,
+  showspaces=false,
+  showstringspaces=false,
+  tabsize=2
+}
+
+% List formatting
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+
+% Professional hyperlinks
+\usepackage{hyperref}
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  urlcolor=blue!50!black,
+  citecolor=blue!50!black,
+  pdftitle={Navigating Regulatory Complexity},
+  pdfauthor={$author-meta$},
+  pdfsubject={Professional Technical Book},
+  pdfkeywords={Technical, Professional, Book},
+  bookmarksnumbered=true,
+  bookmarksopen=true
+}
+
+% Title page formatting
+\title{$title$}
+\author{$author$}
+\date{$date$}
+
+\begin{document}
+
+% Professional title page
+\begin{titlepage}
+\centering
+\vspace*{2cm}
+{\Huge\bfseries $title$ \par}
+\vspace{1cm}
+$if(subtitle)$
+{\LARGE $subtitle$ \par}
+\vspace{1.5cm}
+$endif$
+{\Large\itshape $author$ \par}
+\vfill
+{\large Professional Publishing \par}
+{\large $date$ \par}
+\end{titlepage}
+
+% Copyright page
+\newpage
+\thispagestyle{empty}
+\vspace*{\fill}
+\begin{flushleft}
+\textcopyright\ $date$\ $author$\\
+
+All rights reserved. No part of this publication may be reproduced, distributed, or transmitted in any form or by any means, including photocopying, recording, or other electronic or mechanical methods, without the prior written permission of the author.\\
+
+First Edition: $date$\\
+
+ISBN: 978-0-000-00000-0 (Paperback)\\
+ISBN: 978-0-000-00000-0 (eBook)\\
+
+Published by Professional Publishing\\
+www.professionalpublishing.com\\
+
+Printed in the United States of America
+\end{flushleft}
+\vspace*{\fill}
+
+% Table of contents
+\newpage
+\tableofcontents
+\newpage
+
+% Main content
+$body$
+
+\end{document}

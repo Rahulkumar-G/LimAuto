@@ -81,7 +81,7 @@ class ChapterWriterAgent(BaseAgent):
     def _build_chapter_prompt(
         self, title: str, state: BookState, chapter_index: int, previous_chapters: str
     ) -> str:
-        """Build detailed chapter generation prompt"""
+        """Build detailed chapter generation prompt using unified template"""
         return f"""
         Write a comprehensive chapter titled "{title}" for a book on "{state.topic}".
         
@@ -91,17 +91,51 @@ class ChapterWriterAgent(BaseAgent):
         - Chapter {chapter_index + 1} of {len(state.chapters)}
         - Previous chapters: {previous_chapters}
         
-        Required Chapter Structure:
-        1. Chapter Overview (100-150 words)
-        2. Introduction (300-400 words)
-        3. Main Content (2000-2500 words)
-        4. Practical Examples (400-500 words)
-        5. Chapter Summary (200-300 words)
-        6. Exercises and Projects
-        7. Further Reading
+        REQUIRED UNIFIED TEMPLATE STRUCTURE:
+
+        1. **Opening Scenario** (1-2 sentences):
+           Start with a vivid, real-world scenario or compelling "why this matters" statement that immediately demonstrates the importance of this chapter's topic. Make it concrete and relatable.
+
+        2. **Chapter Overview & Estimated Time**:
+           - Brief description of what this chapter covers
+           - Estimated reading time based on content length
+           
+        3. **Learning Objectives** (3-5 bullet points):
+           Clear, actionable objectives starting with "By the end of this chapter, you will be able to:"
+           - Use active verbs (identify, analyze, create, implement, etc.)
+           - Make objectives specific and measurable
+           
+        4. **Core Content** (2000-2500 words with subheads):
+           - Use descriptive subheadings that preview the content
+           - Include practical examples within each section
+           - Focus on actionable insights, not just theory
+           - Use active voice and conversational tone
+           
+        5. **Case Study/Example** (400-500 words):
+           A detailed, realistic scenario that demonstrates the chapter concepts in action:
+           - Include specific details (company names, numbers, timelines)
+           - Show the problem, approach, and outcome
+           - Highlight key success factors or lessons learned
+           
+        6. **Key Takeaways** (3-5 bullet points):
+           The most important points readers should remember:
+           - Start each with an action verb
+           - Make them practical and implementable
+           - Connect back to learning objectives
+           
+        7. **Glossary Terms**:
+           Define 5-8 key terms used in the chapter:
+           - Include term name and clear, concise definition
+           - Focus on terms essential to understanding the topic
+           
+        STYLE REQUIREMENTS:
+        - Use active voice throughout
+        - Keep sentences concise and clear
+        - Include specific examples and data points
+        - Make content immediately actionable
+        - Use proper Markdown formatting with clear headers
         
-        Use proper Markdown formatting.
-        Target Length: 3000-4000 words total
+        Target Length: 3500-4000 words total
         """
 
     def _post_process_chapter(self, content: str, state: BookState, title: str) -> str:
