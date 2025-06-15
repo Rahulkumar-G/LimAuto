@@ -55,7 +55,7 @@ class BookOrchestrator:
 
         global BookGraph
         BookGraph = GraphClass
-        self.graph = BookGraph(self.llm, save_callback=self._save_checkpoint).build()
+        self.graph = BookGraph(self.llm, save_callback=self._save_checkpoint, enable_parallel=True).build()
         self.workflow = BookWorkflow()
         self._active_topics = set()
         self._lock = Lock()

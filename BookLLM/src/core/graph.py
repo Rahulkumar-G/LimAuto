@@ -1,12 +1,14 @@
 from typing import Any, Dict, List
 from datetime import datetime
+import asyncio
+from concurrent.futures import ThreadPoolExecutor
 
-from BookLLM.src.agents.content.chapter import ChapterWriterAgent
-from BookLLM.src.agents.enhancement.case_study import CaseStudyAgent
-from BookLLM.src.agents.enhancement.glossary import GlossaryAgent
-from BookLLM.src.agents.enhancement.quiz import QuizAgent
-from BookLLM.src.agents.enhancement.template import TemplateAgent
-from BookLLM.src.agents.review.proofreader import ProofreaderAgent
+from ..agents.content.chapter import ChapterWriterAgent
+from ..agents.enhancement.case_study import CaseStudyAgent
+from ..agents.enhancement.glossary import GlossaryAgent
+from ..agents.enhancement.quiz import QuizAgent
+from ..agents.enhancement.template import TemplateAgent
+from ..agents.review.proofreader import ProofreaderAgent
 from langgraph.graph import END, StateGraph
 
 from ..agents.content import OutlineAgent, WriterAgent
@@ -24,11 +26,14 @@ from .types import Config, AgentInput
 class BookGraph:
     """Manages the book generation workflow graph"""
 
-    def __init__(self, llm, save_callback=None):
+    def __init__(self, llm, save_callback=None, enable_parallel=True, max_workers=3):
         self.llm = llm
         self.graph = StateGraph(BookState)
         self.agents = self._initialize_agents()
         self.save_callback = save_callback
+        self.enable_parallel = enable_parallel
+        self.max_workers = max_workers
+        self.parallel_groups = self._get_parallel_groups()
 
     def build(self) -> StateGraph:
         """Build and compile the workflow graph"""
@@ -132,3 +137,61 @@ class BookGraph:
             "template_node",
             "proofreader_node",
         ]
+
+    def _get_parallel_groups(self) -> List[List[str]]:
+        """Define which agents can run in parallel"""
+        if not self.enable_parallel:
+            return []
+        
+        # Groups of agents that can run simultaneously
+        return [
+            ["enhancer_node", "acronym_node", "glossary_node"],  # Enhancement agents
+            ["case_node", "quiz_node", "template_node"],         # Content agents
+        ]
+
+    def _can_run_parallel(self, agent_name: str, completed_steps: List[str]) -> bool:
+        """Check if agent can run in parallel with others"""
+        dependencies = {
+            "enhancer_node": ["chapter_node"],
+            "acronym_node": ["chapter_node"], 
+            "glossary_node": ["chapter_node"],
+            "case_node": ["chapter_node"],
+            "quiz_node": ["chapter_node"],
+            "template_node": ["chapter_node"],
+        }
+        
+        required_deps = dependencies.get(agent_name, [])
+        return all(dep.replace("_node", "") in completed_steps for dep in required_deps)
+
+    def _execute_parallel_group(self, group: List[str], state: BookState) -> BookState:
+        """Execute a group of agents in parallel"""
+        if not self.enable_parallel or len(group) <= 1:
+            # Fall back to sequential execution
+            for agent_name in group:
+                agent = self.agents[agent_name.replace("_node", "")]
+                state = agent.process(state)
+            return state
+
+        def run_agent(agent_name: str):
+            """Run single agent"""
+            try:
+                agent = self.agents[agent_name.replace("_node", "")]
+                return agent.process(state)
+            except Exception as e:
+                self.llm.logger.error(f"Parallel agent {agent_name} failed: {e}")
+                return state
+
+        # Execute agents in parallel using ThreadPoolExecutor
+        with ThreadPoolExecutor(max_workers=min(len(group), self.max_workers)) as executor:
+            futures = [executor.submit(run_agent, agent_name) for agent_name in group]
+            results = [future.result() for future in futures]
+
+        # Merge results - simple strategy: use the last successful result
+        # In production, you'd want more sophisticated state merging
+        final_state = state
+        for result in results:
+            if result and hasattr(result, 'last_modified'):
+                if not hasattr(final_state, 'last_modified') or result.last_modified > final_state.last_modified:
+                    final_state = result
+
+        return final_state

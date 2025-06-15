@@ -14,19 +14,68 @@ through a graph defined in `BookLLM`.
 
 ## Installation
 
+### Option 1: Local Development Setup
+
 1. Clone this repository.
-2. Install the package and dependencies:
+2. Install Python dependencies:
 
    ```bash
-   pip install .
+   pip install -r requirements.txt
    ```
 
-3. Alternatively build a Docker image:
+3. Install frontend dependencies:
 
    ```bash
-   docker build -t langgraphbook .
-   docker run -p 8000:8000 langgraphbook
+   cd frontend
+   npm install
+   cd ..
    ```
+
+4. Start the development environment:
+
+   ```bash
+   # Start both backend and frontend
+   python start_dev.py
+   
+   # Or start them separately:
+   python start_backend.py  # Backend on http://localhost:8000
+   python start_frontend.py # Frontend on http://localhost:3000
+   ```
+
+### Option 2: Docker Setup (Recommended)
+
+1. Install Docker and Docker Compose
+2. Clone this repository
+3. Choose your environment:
+
+   ```bash
+   # Development environment with live reload
+   ./docker-start.sh dev
+   
+   # Production environment
+   ./docker-start.sh prod
+   
+   # Stop all services
+   ./docker-start.sh stop
+   
+   # Clean up Docker resources
+   ./docker-start.sh clean
+   ```
+
+### Quick Start
+
+```bash
+# 1. Start the backend API
+python start_backend.py
+
+# 2. In another terminal, start the frontend
+python start_frontend.py
+
+# 3. Access the application
+# Frontend: http://localhost:3000
+# Backend API: http://localhost:8000
+# Health Check: http://localhost:8000/health
+```
 
 ## Configuration
 
@@ -75,13 +124,9 @@ with the output directory path.
 Start the API server:
 
 ```bash
+python start_backend.py
+# or
 python -m BookLLM.src.api
-```
-
-To serve both the backend API and a static UI in one step run:
-
-```bash
-python run_combined.py
 ```
 
 Generate a book via API:
@@ -90,6 +135,27 @@ Generate a book via API:
 curl -X POST http://localhost:8000/generate -H "Content-Type: application/json" \
   -d '{"topic": "My Book Topic"}'
 ```
+
+### API Endpoints
+
+- `GET /health` - Health check
+- `GET /api/agents` - List available agents
+- `GET /api/metrics` - Get token usage metrics
+- `GET /api/agent-starts` - Get agent start times
+- `POST /generate` - Generate a book
+- `POST /api/dispatch` - Send prompt to specific agent
+- `GET /events/agent-status` - Real-time status updates (SSE)
+
+### Frontend UI
+
+The React frontend provides a user-friendly interface for:
+- Book generation with custom parameters
+- Real-time progress monitoring
+- Agent status tracking
+- Metrics visualization
+- Export management
+
+Access it at http://localhost:3000 after starting both backend and frontend services.
 
 ## Running tests
 

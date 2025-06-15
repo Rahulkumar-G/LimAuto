@@ -1,0 +1,50 @@
+# Development environment with live reload
+version: '3.8'
+
+services:
+  # Redis for caching
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  # Backend with live reload
+  backend-dev:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - REDIS_URL=redis://redis:6379
+    volumes:
+      - ./BookLLM:/app/BookLLM
+      - ./tests:/app/tests
+      - ./book_output:/app/book_output
+      - ./logs:/app/logs
+      - ./*.py:/app/
+    depends_on:
+      - redis
+    command: python start_backend.py
+
+  # Frontend with live reload
+  frontend-dev:
+    build:
+      context: ./frontend
+      dockerfile: ../Dockerfile.frontend-dev
+    ports:
+      - "3000:3000"
+    environment:
+      - REACT_APP_API_URL=http://localhost:8000
+      - CHOKIDAR_USEPOLLING=true
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+      - /app/node_modules
+    depends_on:
+      - backend-dev
+
+volumes:
+  redis_data:

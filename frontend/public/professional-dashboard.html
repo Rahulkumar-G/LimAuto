@@ -1,0 +1,1280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BookLLM - Professional Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        @keyframes shimmer {
+            0% { background-position: -200px 0; }
+            100% { background-position: calc(200px + 100%) 0; }
+        }
+        
+        .animate-fadeIn { animation: fadeIn 0.5s ease-out; }
+        .animate-slideIn { animation: slideIn 0.3s ease-out; }
+        .animate-pulse { animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; }
+        .animate-spin { animation: spin 1s linear infinite; }
+        
+        .shimmer {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200px 100%;
+            animation: shimmer 1.5s infinite;
+        }
+        
+        /* Custom components */
+        .card {
+            @apply bg-white rounded-xl shadow-sm border border-gray-200/60 backdrop-blur-sm;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .card:hover {
+            @apply shadow-lg border-gray-300/60;
+            transform: translateY(-1px);
+        }
+        
+        .btn {
+            @apply inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+        }
+        
+        .btn-primary {
+            @apply bg-blue-600 text-white hover:bg-blue-700 focus:ring-blue-500 shadow-sm;
+        }
+        
+        .btn-secondary {
+            @apply bg-gray-100 text-gray-900 hover:bg-gray-200 focus:ring-gray-500;
+        }
+        
+        .btn-ghost {
+            @apply bg-transparent text-gray-600 hover:bg-gray-100 hover:text-gray-900;
+        }
+        
+        .input {
+            @apply block w-full rounded-lg border border-gray-300 px-3 py-2 text-sm placeholder-gray-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500;
+            transition: all 0.2s ease-in-out;
+        }
+        
+        .badge {
+            @apply inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium;
+        }
+        
+        .badge-success { @apply bg-emerald-100 text-emerald-800; }
+        .badge-error { @apply bg-red-100 text-red-800; }
+        .badge-warning { @apply bg-amber-100 text-amber-800; }
+        .badge-info { @apply bg-blue-100 text-blue-800; }
+        
+        .status-indicator {
+            @apply inline-block w-2 h-2 rounded-full;
+        }
+        
+        .glass {
+            backdrop-filter: blur(16px) saturate(180%);
+            background-color: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(209, 213, 219, 0.3);
+        }
+        
+        /* Dark mode support */
+        @media (prefers-color-scheme: dark) {
+            .card {
+                @apply bg-gray-900/50 border-gray-800/60;
+            }
+            .glass {
+                background-color: rgba(17, 24, 39, 0.75);
+                border-color: rgba(75, 85, 99, 0.3);
+            }
+        }
+        
+        /* Loading skeleton */
+        .skeleton {
+            @apply bg-gray-200 rounded animate-pulse;
+        }
+        
+        /* Progress bar */
+        .progress-bar {
+            @apply w-full bg-gray-200 rounded-full h-2 overflow-hidden;
+        }
+        
+        .progress-fill {
+            @apply h-full transition-all duration-500 ease-out;
+        }
+        
+        /* Connection status styles */
+        .connection-online { @apply bg-emerald-500; }
+        .connection-offline { @apply bg-red-500; }
+        .connection-connecting { @apply bg-amber-500 animate-pulse; }
+        
+        /* Tab animations */
+        .tab-content {
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .tab-button {
+            transition: all 0.2s ease-in-out;
+            position: relative;
+        }
+        
+        .tab-button::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: currentColor;
+            transform: scaleX(0);
+            transition: transform 0.2s ease-in-out;
+        }
+        
+        .tab-button.active::after {
+            transform: scaleX(1);
+        }
+        
+        /* Notification styles */
+        .notification {
+            @apply fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 max-w-sm;
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .notification-success { @apply bg-emerald-50 text-emerald-800 border border-emerald-200; }
+        .notification-error { @apply bg-red-50 text-red-800 border border-red-200; }
+        .notification-info { @apply bg-blue-50 text-blue-800 border border-blue-200; }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-gray-50 via-white to-gray-50 min-h-screen">
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="fixed inset-0 bg-white/80 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">Initializing BookLLM</h2>
+            <p class="text-gray-600">Connecting to AI agents...</p>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <header class="glass border-b sticky top-0 z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+                            <i data-lucide="book-open" class="w-5 h-5 text-white"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold text-gray-900">BookLLM</h1>
+                            <p class="text-xs text-gray-500">AI Book Generation Platform</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center space-x-2 ml-8">
+                        <span id="status-indicator" class="status-indicator connection-connecting"></span>
+                        <span id="status-text" class="text-sm text-gray-600">Connecting...</span>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <div id="connection-status" class="text-sm text-gray-500">
+                        <div class="flex items-center space-x-2">
+                            <i data-lucide="wifi" class="w-4 h-4"></i>
+                            <span>Connecting to API...</span>
+                        </div>
+                    </div>
+                    
+                    <button id="refresh-btn" class="btn btn-ghost p-2" onclick="retryConnection()">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation -->
+    <nav class="glass border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex space-x-8">
+                <button onclick="showTab('dashboard')" class="tab-button py-4 px-1 font-medium text-sm text-blue-600 active" data-tab="dashboard">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                        <span>Dashboard</span>
+                    </div>
+                </button>
+                <button onclick="showTab('generate')" class="tab-button py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700" data-tab="generate">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="file-plus" class="w-4 h-4"></i>
+                        <span>Generate Book</span>
+                    </div>
+                </button>
+                <button onclick="showTab('agents')" class="tab-button py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700" data-tab="agents">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="bot" class="w-4 h-4"></i>
+                        <span>AI Agents</span>
+                    </div>
+                </button>
+                <button onclick="showTab('metrics')" class="tab-button py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700" data-tab="metrics">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                        <span>Analytics</span>
+                    </div>
+                </button>
+                <button onclick="showTab('exports')" class="tab-button py-4 px-1 font-medium text-sm text-gray-500 hover:text-gray-700" data-tab="exports">
+                    <div class="flex items-center space-x-2">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                        <span>Export</span>
+                    </div>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto py-8 px-4 sm:px-6 lg:px-8">
+        <!-- Dashboard Tab -->
+        <div id="dashboard-tab" class="tab-content animate-fadeIn">
+            <!-- System Status Card -->
+            <div class="card p-6 mb-8">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900 mb-2">System Overview</h2>
+                        <p class="text-gray-600">Real-time status and performance metrics</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div id="system-health" class="flex items-center space-x-2">
+                            <div class="status-indicator connection-connecting"></div>
+                            <span class="text-sm font-medium">Checking...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Stats Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                    <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-blue-600 text-sm font-medium">Available Agents</p>
+                                <p id="agents-count" class="text-3xl font-bold text-blue-900">--</p>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                                <i data-lucide="users" class="w-6 h-6 text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-emerald-50 to-emerald-100 p-6 rounded-xl">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-emerald-600 text-sm font-medium">Books Generated</p>
+                                <p id="books-count" class="text-3xl font-bold text-emerald-900">0</p>
+                            </div>
+                            <div class="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center">
+                                <i data-lucide="book" class="w-6 h-6 text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-purple-50 to-purple-100 p-6 rounded-xl">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-purple-600 text-sm font-medium">Active Tasks</p>
+                                <p id="tasks-count" class="text-3xl font-bold text-purple-900">0</p>
+                            </div>
+                            <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                                <i data-lucide="activity" class="w-6 h-6 text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-gradient-to-r from-amber-50 to-amber-100 p-6 rounded-xl">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-amber-600 text-sm font-medium">System Load</p>
+                                <p class="text-3xl font-bold text-amber-900">Low</p>
+                            </div>
+                            <div class="w-12 h-12 bg-amber-500 rounded-lg flex items-center justify-center">
+                                <i data-lucide="cpu" class="w-6 h-6 text-white"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Agents Grid -->
+            <div class="card p-6">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-xl font-semibold text-gray-900">AI Agents</h3>
+                    <button onclick="loadAgents()" class="btn btn-secondary px-3 py-1.5 text-sm">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
+                        Refresh
+                    </button>
+                </div>
+                <div id="agents-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                    <!-- Skeleton loaders -->
+                    <div class="p-4 border border-gray-200 rounded-lg">
+                        <div class="skeleton h-4 w-3/4 mb-2"></div>
+                        <div class="skeleton h-3 w-1/2"></div>
+                    </div>
+                    <div class="p-4 border border-gray-200 rounded-lg">
+                        <div class="skeleton h-4 w-3/4 mb-2"></div>
+                        <div class="skeleton h-3 w-1/2"></div>
+                    </div>
+                    <div class="p-4 border border-gray-200 rounded-lg">
+                        <div class="skeleton h-4 w-3/4 mb-2"></div>
+                        <div class="skeleton h-3 w-1/2"></div>
+                    </div>
+                    <div class="p-4 border border-gray-200 rounded-lg">
+                        <div class="skeleton h-4 w-3/4 mb-2"></div>
+                        <div class="skeleton h-3 w-1/2"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Generate Tab -->
+        <div id="generate-tab" class="tab-content hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="card p-8">
+                    <div class="text-center mb-8">
+                        <div class="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="sparkles" class="w-8 h-8 text-white"></i>
+                        </div>
+                        <h2 class="text-3xl font-bold text-gray-900 mb-2">Create Your Book</h2>
+                        <p class="text-gray-600">Transform your ideas into professionally written content</p>
+                    </div>
+                    
+                    <form id="generation-form" class="space-y-8">
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-900 mb-3">Book Topic *</label>
+                                <textarea id="topic" rows="4" class="input" placeholder="Describe your book topic in detail. Be specific about the subject matter, target outcomes, and key concepts you want to cover..."></textarea>
+                                <p class="text-sm text-gray-500 mt-2">The more detailed your topic description, the better the AI can tailor the content.</p>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-900 mb-3">Target Audience</label>
+                                    <select id="audience" class="input">
+                                        <option value="beginners">Beginners - New to the subject</option>
+                                        <option value="intermediate">Intermediate - Some experience</option>
+                                        <option value="advanced">Advanced - Deep expertise</option>
+                                        <option value="professionals">Professionals - Industry practitioners</option>
+                                        <option value="students">Students - Academic context</option>
+                                        <option value="researchers">Researchers - Scientific approach</option>
+                                    </select>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-900 mb-3">Writing Style</label>
+                                    <select id="style" class="input">
+                                        <option value="professional">Professional - Business focused</option>
+                                        <option value="academic">Academic - Scholarly tone</option>
+                                        <option value="conversational">Conversational - Friendly approach</option>
+                                        <option value="technical">Technical - Detailed specifications</option>
+                                        <option value="authoritative">Authoritative - Expert guidance</option>
+                                        <option value="narrative">Narrative - Story-driven</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-900 mb-3">Target Pages</label>
+                                    <input type="number" id="pages" value="100" min="10" max="1000" class="input">
+                                    <p class="text-sm text-gray-500 mt-1">Recommended: 50-300 pages</p>
+                                </div>
+                                
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-900 mb-3">Language</label>
+                                    <select id="language" class="input">
+                                        <option value="en">English</option>
+                                        <option value="es">Spanish</option>
+                                        <option value="fr">French</option>
+                                        <option value="de">German</option>
+                                        <option value="it">Italian</option>
+                                        <option value="pt">Portuguese</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="border-t pt-6">
+                            <div class="flex items-center justify-between">
+                                <div class="text-sm text-gray-600">
+                                    <p>Estimated generation time: 15-30 minutes</p>
+                                </div>
+                                <button type="submit" id="generate-btn" class="btn btn-primary px-8 py-3 text-lg">
+                                    <i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>
+                                    Generate Book
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <div id="generation-result" class="mt-8 hidden"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Agents Tab -->
+        <div id="agents-tab" class="tab-content hidden">
+            <div class="max-w-6xl mx-auto">
+                <div class="card p-8">
+                    <div class="text-center mb-8">
+                        <div class="w-16 h-16 bg-gradient-to-r from-purple-600 to-pink-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="bot" class="w-8 h-8 text-white"></i>
+                        </div>
+                        <h2 class="text-3xl font-bold text-gray-900 mb-2">AI Agent Playground</h2>
+                        <p class="text-gray-600">Test individual agents and explore their capabilities</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-900 mb-3">Select Agent</label>
+                                <select id="agent-select" class="input">
+                                    <option value="">Choose an AI agent...</option>
+                                </select>
+                                <div id="agent-info" class="mt-3 p-3 bg-gray-50 rounded-lg hidden">
+                                    <p class="text-sm text-gray-600"></p>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-900 mb-3">Prompt</label>
+                                <textarea id="agent-prompt" rows="6" class="input" placeholder="Enter your prompt for the selected agent..."></textarea>
+                                <div class="mt-3 flex flex-wrap gap-2">
+                                    <button onclick="setExamplePrompt('title')" class="btn btn-ghost px-3 py-1 text-xs">
+                                        Title Example
+                                    </button>
+                                    <button onclick="setExamplePrompt('outline')" class="btn btn-ghost px-3 py-1 text-xs">
+                                        Outline Example
+                                    </button>
+                                    <button onclick="setExamplePrompt('chapter')" class="btn btn-ghost px-3 py-1 text-xs">
+                                        Chapter Example
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <button onclick="dispatchAgent()" id="dispatch-btn" class="btn btn-primary w-full py-3">
+                                <i data-lucide="send" class="w-4 h-4 mr-2"></i>
+                                Send to Agent
+                            </button>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-900 mb-3">Agent Response</label>
+                            <div id="agent-response" class="bg-gray-50 border border-gray-200 rounded-lg p-4 min-h-[300px] text-sm font-mono whitespace-pre-wrap">
+                                <div class="text-gray-500 text-center py-12">
+                                    <i data-lucide="message-circle" class="w-12 h-12 mx-auto mb-4 text-gray-400"></i>
+                                    <p>Agent responses will appear here...</p>
+                                    <p class="text-xs mt-2">Select an agent and send a prompt to get started</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metrics Tab -->
+        <div id="metrics-tab" class="tab-content hidden">
+            <div class="space-y-8">
+                <div class="card p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-2">Performance Analytics</h2>
+                            <p class="text-gray-600">Monitor system usage and performance metrics</p>
+                        </div>
+                        <button onclick="loadMetrics()" class="btn btn-secondary">
+                            <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
+                            Refresh Data
+                        </button>
+                    </div>
+                    
+                    <div id="metrics-content">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-blue-600 text-sm font-medium">Total Tokens</p>
+                                        <p id="tokens-metric" class="text-3xl font-bold text-blue-900">--</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                                        <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gradient-to-r from-emerald-50 to-emerald-100 p-6 rounded-xl">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-emerald-600 text-sm font-medium">Total Cost</p>
+                                        <p id="cost-metric" class="text-3xl font-bold text-emerald-900">--</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center">
+                                        <i data-lucide="dollar-sign" class="w-6 h-6 text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gradient-to-r from-purple-50 to-purple-100 p-6 rounded-xl">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-purple-600 text-sm font-medium">API Calls</p>
+                                        <p id="calls-metric" class="text-3xl font-bold text-purple-900">--</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                                        <i data-lucide="activity" class="w-6 h-6 text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="text-center py-12 text-gray-500">
+                            <i data-lucide="bar-chart-3" class="w-16 h-16 mx-auto mb-4 text-gray-400"></i>
+                            <p class="text-lg">No metrics data available yet</p>
+                            <p class="text-sm">Metrics will appear after book generation activities</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Exports Tab -->
+        <div id="exports-tab" class="tab-content hidden">
+            <div class="max-w-4xl mx-auto">
+                <div class="card p-8">
+                    <div class="text-center mb-8">
+                        <div class="w-16 h-16 bg-gradient-to-r from-emerald-600 to-teal-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i data-lucide="download" class="w-8 h-8 text-white"></i>
+                        </div>
+                        <h2 class="text-3xl font-bold text-gray-900 mb-2">Export & Download</h2>
+                        <p class="text-gray-600">Download your generated books in multiple formats</p>
+                    </div>
+                    
+                    <div class="text-center py-16 text-gray-500">
+                        <i data-lucide="file-text" class="w-16 h-16 mx-auto mb-4 text-gray-400"></i>
+                        <p class="text-lg">No books available for export</p>
+                        <p class="text-sm">Generate a book first to access export options</p>
+                        <button onclick="showTab('generate')" class="btn btn-primary mt-4">
+                            <i data-lucide="plus" class="w-4 h-4 mr-2"></i>
+                            Generate Your First Book
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Notification Container -->
+    <div id="notifications" class="fixed top-4 right-4 space-y-2 z-50"></div>
+
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        // API Configuration with multiple endpoints to try
+        const API_ENDPOINTS = [
+            'http://localhost:8000',
+            'http://127.0.0.1:8000',
+            'http://0.0.0.0:8000'
+        ];
+        
+        let currentApiBase = API_ENDPOINTS[0];
+        let agents = [];
+        let connectionRetries = 0;
+        const maxRetries = 3;
+
+        // Professional notification system
+        function showNotification(message, type = 'info', duration = 5000) {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.innerHTML = `
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        ${type === 'success' ? '<i data-lucide="check-circle" class="w-5 h-5"></i>' :
+                          type === 'error' ? '<i data-lucide="x-circle" class="w-5 h-5"></i>' :
+                          '<i data-lucide="info" class="w-5 h-5"></i>'}
+                    </div>
+                    <div class="ml-3">
+                        <p class="font-medium">${message}</p>
+                    </div>
+                    <div class="ml-auto pl-3">
+                        <button onclick="this.parentElement.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('notifications').appendChild(notification);
+            lucide.createIcons();
+            
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, duration);
+        }
+
+        // Enhanced API client with retry logic
+        async function apiRequest(endpoint, options = {}) {
+            const errors = [];
+            
+            for (const baseUrl of API_ENDPOINTS) {
+                try {
+                    const response = await fetch(`${baseUrl}${endpoint}`, {
+                        headers: {
+                            'Content-Type': 'application/json',
+                            ...options.headers,
+                        },
+                        ...options,
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+                    }
+
+                    currentApiBase = baseUrl;
+                    return await response.json();
+                } catch (error) {
+                    errors.push(`${baseUrl}: ${error.message}`);
+                    console.warn(`API request failed for ${baseUrl}:`, error);
+                }
+            }
+            
+            throw new Error(`All API endpoints failed: ${errors.join(', ')}`);
+        }
+
+        // Enhanced connection checker
+        async function checkConnection() {
+            const statusIndicator = document.getElementById('status-indicator');
+            const statusText = document.getElementById('status-text');
+            const connectionStatus = document.getElementById('connection-status');
+            const systemHealth = document.getElementById('system-health');
+            
+            // Update UI to connecting state
+            statusIndicator.className = 'status-indicator connection-connecting';
+            statusText.textContent = 'Connecting...';
+            connectionStatus.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <i data-lucide="wifi" class="w-4 h-4 animate-pulse"></i>
+                    <span>Attempting connection...</span>
+                </div>
+            `;
+
+            try {
+                const health = await apiRequest('/health');
+                
+                // Success state
+                statusIndicator.className = 'status-indicator connection-online';
+                statusText.textContent = 'System Online';
+                connectionStatus.innerHTML = `
+                    <div class="flex items-center space-x-2 text-emerald-600">
+                        <i data-lucide="wifi" class="w-4 h-4"></i>
+                        <span>Connected to ${currentApiBase}</span>
+                    </div>
+                `;
+                
+                systemHealth.innerHTML = `
+                    <div class="status-indicator connection-online"></div>
+                    <span class="text-sm font-medium text-emerald-600">Healthy</span>
+                `;
+                
+                connectionRetries = 0;
+                lucide.createIcons();
+                return true;
+                
+            } catch (error) {
+                console.error('Connection check failed:', error);
+                
+                // Error state
+                statusIndicator.className = 'status-indicator connection-offline';
+                statusText.textContent = 'System Offline';
+                connectionStatus.innerHTML = `
+                    <div class="flex items-center space-x-2 text-red-600">
+                        <i data-lucide="wifi-off" class="w-4 h-4"></i>
+                        <span>Connection Failed</span>
+                    </div>
+                `;
+                
+                systemHealth.innerHTML = `
+                    <div class="status-indicator connection-offline"></div>
+                    <span class="text-sm font-medium text-red-600">Offline</span>
+                `;
+                
+                // Show detailed error notification
+                if (connectionRetries < maxRetries) {
+                    showNotification(
+                        `Connection attempt ${connectionRetries + 1}/${maxRetries} failed. Retrying in 3 seconds...`,
+                        'error',
+                        3000
+                    );
+                    connectionRetries++;
+                    
+                    setTimeout(() => {
+                        checkConnection();
+                    }, 3000);
+                } else {
+                    showNotification(
+                        'Unable to connect to BookLLM API. Please check if the server is running on port 8000.',
+                        'error',
+                        10000
+                    );
+                }
+                
+                lucide.createIcons();
+                return false;
+            }
+        }
+
+        // Enhanced agents loader
+        async function loadAgents() {
+            const agentsGrid = document.getElementById('agents-grid');
+            const agentsCount = document.getElementById('agents-count');
+            const agentSelect = document.getElementById('agent-select');
+            
+            try {
+                agents = await apiRequest('/api/agents');
+                
+                // Update count
+                agentsCount.textContent = agents.length;
+                
+                // Create agent categories
+                const categories = {
+                    'Content Creation': ['BookTitleAgent', 'ChapterWriterAgent', 'OutlineAgent', 'WriterAgent'],
+                    'Front Matter': ['DedicationAgent', 'ForewordAgent', 'PrefaceAgent', 'TableOfContentsAgent', 'TitlePageAgent'],
+                    'Back Matter': ['AboutAuthorAgent', 'AcknowledgmentsAgent', 'BibliographyAgent', 'IndexAgent'],
+                    'Enhancement': ['CaseStudyAgent', 'CodeSampleAgent', 'GlossaryAgent', 'QuizAgent', 'TemplateAgent'],
+                    'Quality Control': ['ContentValidator', 'ProofreaderAgent', 'ReadabilityTuner'],
+                    'Specialized': ['AcronymAgent', 'EpigraphAgent', 'GlossaryLinker', 'IndexSanitizerAgent']
+                };
+                
+                // Update agents grid
+                agentsGrid.innerHTML = agents.map(agent => {
+                    const category = Object.keys(categories).find(cat => categories[cat].includes(agent)) || 'Other';
+                    const categoryColor = {
+                        'Content Creation': 'blue',
+                        'Front Matter': 'emerald',
+                        'Back Matter': 'purple',
+                        'Enhancement': 'amber',
+                        'Quality Control': 'red',
+                        'Specialized': 'indigo'
+                    }[category] || 'gray';
+                    
+                    return `
+                        <div class="group p-4 border border-gray-200 rounded-lg hover:border-${categoryColor}-300 hover:shadow-md transition-all duration-200 animate-slideIn">
+                            <div class="flex items-start justify-between mb-2">
+                                <h4 class="font-semibold text-gray-900 text-sm group-hover:text-${categoryColor}-600 transition-colors">
+                                    ${agent.replace('Agent', '')}
+                                </h4>
+                                <span class="badge badge-${categoryColor === 'red' ? 'error' : categoryColor === 'emerald' ? 'success' : 'info'} text-xs">
+                                    ${category}
+                                </span>
+                            </div>
+                            <p class="text-xs text-gray-600 mb-3">${getAgentDescription(agent)}</p>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                                <span class="text-xs text-emerald-600 font-medium">Ready</span>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+                // Update agent select dropdown
+                agentSelect.innerHTML = '<option value="">Choose an AI agent...</option>' +
+                    Object.entries(categories).map(([category, categoryAgents]) => {
+                        const availableAgents = categoryAgents.filter(agent => agents.includes(agent));
+                        if (availableAgents.length === 0) return '';
+                        
+                        return `
+                            <optgroup label="${category}">
+                                ${availableAgents.map(agent => `<option value="${agent}">${agent}</option>`).join('')}
+                            </optgroup>
+                        `;
+                    }).join('');
+                
+                lucide.createIcons();
+                showNotification(`Successfully loaded ${agents.length} AI agents`, 'success');
+                
+            } catch (error) {
+                console.error('Failed to load agents:', error);
+                agentsGrid.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <i data-lucide="alert-circle" class="w-12 h-12 mx-auto mb-4 text-red-400"></i>
+                        <p class="text-red-600 font-medium">Failed to load agents</p>
+                        <p class="text-sm text-gray-600 mt-1">Please check your connection and try again</p>
+                        <button onclick="loadAgents()" class="btn btn-secondary mt-4">
+                            <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
+                            Retry
+                        </button>
+                    </div>
+                `;
+                
+                agentsCount.textContent = '--';
+                lucide.createIcons();
+                showNotification('Failed to load AI agents', 'error');
+            }
+        }
+
+        // Agent descriptions
+        function getAgentDescription(agent) {
+            const descriptions = {
+                'BookTitleAgent': 'Generates compelling and SEO-friendly book titles',
+                'ChapterWriterAgent': 'Creates detailed chapter content with proper structure',
+                'OutlineAgent': 'Develops comprehensive book outlines and structure',
+                'WriterAgent': 'Handles general content writing and text generation',
+                'DedicationAgent': 'Crafts personal dedications for books',
+                'ForewordAgent': 'Writes professional forewords and introductions',
+                'PrefaceAgent': 'Creates engaging prefaces that set context',
+                'TableOfContentsAgent': 'Generates organized table of contents',
+                'TitlePageAgent': 'Designs professional title page content',
+                'AboutAuthorAgent': 'Writes compelling author biographies',
+                'AcknowledgmentsAgent': 'Creates thoughtful acknowledgment sections',
+                'BibliographyAgent': 'Formats and manages bibliographies and references',
+                'IndexAgent': 'Generates comprehensive book indexes',
+                'CaseStudyAgent': 'Develops detailed case studies and examples',
+                'CodeSampleAgent': 'Creates and formats code examples for technical books',
+                'GlossaryAgent': 'Builds comprehensive glossaries of terms',
+                'QuizAgent': 'Generates quizzes and assessment materials',
+                'TemplateAgent': 'Applies consistent formatting and templates',
+                'ContentValidator': 'Validates content quality and accuracy',
+                'ProofreaderAgent': 'Performs grammar and style checking',
+                'ReadabilityTuner': 'Optimizes text for target audience readability'
+            };
+            
+            return descriptions[agent] || 'Specialized AI agent for book generation tasks';
+        }
+
+        // Enhanced tab management with animations
+        function showTab(tabName) {
+            // Hide all tab contents with fade out
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.opacity = '0';
+                setTimeout(() => {
+                    tab.classList.add('hidden');
+                }, 150);
+            });
+            
+            // Update tab buttons
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                btn.classList.remove('active', 'text-blue-600');
+                btn.classList.add('text-gray-500');
+            });
+            
+            // Show selected tab with fade in
+            setTimeout(() => {
+                const selectedTab = document.getElementById(tabName + '-tab');
+                selectedTab.classList.remove('hidden');
+                setTimeout(() => {
+                    selectedTab.style.opacity = '1';
+                }, 50);
+                
+                const selectedButton = document.querySelector(`[data-tab="${tabName}"]`);
+                selectedButton.classList.remove('text-gray-500');
+                selectedButton.classList.add('active', 'text-blue-600');
+            }, 150);
+        }
+
+        // Enhanced book generation
+        async function generateBook(formData) {
+            const btn = document.getElementById('generate-btn');
+            const resultEl = document.getElementById('generation-result');
+            
+            btn.disabled = true;
+            btn.innerHTML = `
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Generating Book...
+            `;
+            
+            try {
+                const response = await apiRequest('/generate', {
+                    method: 'POST',
+                    body: JSON.stringify(formData)
+                });
+                
+                resultEl.innerHTML = `
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-6 animate-fadeIn">
+                        <div class="flex items-center mb-3">
+                            <div class="w-8 h-8 bg-emerald-500 rounded-full flex items-center justify-center mr-3">
+                                <i data-lucide="check" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-emerald-800">Generation Started Successfully!</h3>
+                        </div>
+                        <p class="text-emerald-700">${response.message}</p>
+                        <div class="mt-4 p-4 bg-white rounded-lg border border-emerald-200">
+                            <p class="text-sm text-gray-600 mb-2">Your book is being generated by our AI agents. This process typically takes:</p>
+                            <ul class="text-sm text-gray-600 space-y-1 ml-4">
+                                <li>• 15-30 minutes for standard books (100-200 pages)</li>
+                                <li>• 30-60 minutes for comprehensive books (200+ pages)</li>
+                                <li>• Real-time progress updates will appear in the Dashboard tab</li>
+                            </ul>
+                        </div>
+                    </div>
+                `;
+                resultEl.classList.remove('hidden');
+                lucide.createIcons();
+                
+                showNotification('Book generation started! Check the Dashboard for progress updates.', 'success');
+                
+                // Auto-switch to dashboard after 3 seconds
+                setTimeout(() => {
+                    showTab('dashboard');
+                }, 3000);
+                
+            } catch (error) {
+                resultEl.innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded-lg p-6 animate-fadeIn">
+                        <div class="flex items-center mb-3">
+                            <div class="w-8 h-8 bg-red-500 rounded-full flex items-center justify-center mr-3">
+                                <i data-lucide="x" class="w-5 h-5 text-white"></i>
+                            </div>
+                            <h3 class="text-lg font-semibold text-red-800">Generation Failed</h3>
+                        </div>
+                        <p class="text-red-700 mb-4">${error.message}</p>
+                        <button onclick="retryConnection()" class="btn btn-secondary">
+                            <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
+                            Check Connection
+                        </button>
+                    </div>
+                `;
+                resultEl.classList.remove('hidden');
+                lucide.createIcons();
+                
+                showNotification('Failed to start book generation. Please check your connection.', 'error');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `
+                    <i data-lucide="sparkles" class="w-5 h-5 mr-2"></i>
+                    Generate Book
+                `;
+                lucide.createIcons();
+            }
+        }
+
+        // Enhanced agent dispatch
+        async function dispatchAgent() {
+            const agent = document.getElementById('agent-select').value;
+            const prompt = document.getElementById('agent-prompt').value;
+            const responseEl = document.getElementById('agent-response');
+            const btn = document.getElementById('dispatch-btn');
+            
+            if (!agent || !prompt.trim()) {
+                showNotification('Please select an agent and enter a prompt', 'error');
+                return;
+            }
+            
+            btn.disabled = true;
+            btn.innerHTML = `
+                <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                Processing...
+            `;
+            
+            responseEl.innerHTML = `
+                <div class="flex items-center justify-center py-12">
+                    <div class="text-center">
+                        <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p class="text-gray-600">Agent is processing your request...</p>
+                    </div>
+                </div>
+            `;
+            
+            try {
+                const response = await apiRequest('/api/dispatch', {
+                    method: 'POST',
+                    body: JSON.stringify({ agent, prompt })
+                });
+                
+                responseEl.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-2 text-sm text-gray-600 border-b pb-2">
+                            <i data-lucide="bot" class="w-4 h-4"></i>
+                            <span class="font-medium">${agent}</span>
+                            <span>•</span>
+                            <span>${new Date().toLocaleTimeString()}</span>
+                        </div>
+                        <div class="text-gray-800">${response.response}</div>
+                    </div>
+                `;
+                
+                showNotification(`${agent} completed your request`, 'success');
+                
+            } catch (error) {
+                responseEl.innerHTML = `
+                    <div class="text-center py-12">
+                        <i data-lucide="alert-circle" class="w-12 h-12 mx-auto mb-4 text-red-400"></i>
+                        <p class="text-red-600 font-medium">Request Failed</p>
+                        <p class="text-sm text-gray-600 mt-2">${error.message}</p>
+                    </div>
+                `;
+                
+                showNotification('Agent request failed. Please try again.', 'error');
+                lucide.createIcons();
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `
+                    <i data-lucide="send" class="w-4 h-4 mr-2"></i>
+                    Send to Agent
+                `;
+                lucide.createIcons();
+            }
+        }
+
+        // Enhanced metrics loader
+        async function loadMetrics() {
+            const metricsContent = document.getElementById('metrics-content');
+            const tokensMetric = document.getElementById('tokens-metric');
+            const costMetric = document.getElementById('cost-metric');
+            const callsMetric = document.getElementById('calls-metric');
+            
+            try {
+                const metrics = await apiRequest('/api/metrics');
+                
+                tokensMetric.textContent = metrics.total_tokens?.toLocaleString() || '0';
+                costMetric.textContent = `$${(metrics.total_cost || 0).toFixed(4)}`;
+                
+                const totalCalls = Object.values(metrics.agents || {}).reduce((sum, agent) => sum + (agent.calls || 0), 0);
+                callsMetric.textContent = totalCalls.toLocaleString();
+                
+                if (Object.keys(metrics.agents || {}).length > 0) {
+                    // Show detailed metrics
+                    const agentMetrics = Object.entries(metrics.agents)
+                        .sort(([,a], [,b]) => (b.cost || 0) - (a.cost || 0))
+                        .slice(0, 10);
+                    
+                    metricsContent.innerHTML = `
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                            <div class="bg-gradient-to-r from-blue-50 to-blue-100 p-6 rounded-xl">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-blue-600 text-sm font-medium">Total Tokens</p>
+                                        <p class="text-3xl font-bold text-blue-900">${metrics.total_tokens?.toLocaleString() || '0'}</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
+                                        <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gradient-to-r from-emerald-50 to-emerald-100 p-6 rounded-xl">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-emerald-600 text-sm font-medium">Total Cost</p>
+                                        <p class="text-3xl font-bold text-emerald-900">$${(metrics.total_cost || 0).toFixed(4)}</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center">
+                                        <i data-lucide="dollar-sign" class="w-6 h-6 text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-gradient-to-r from-purple-50 to-purple-100 p-6 rounded-xl">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-purple-600 text-sm font-medium">API Calls</p>
+                                        <p class="text-3xl font-bold text-purple-900">${totalCalls.toLocaleString()}</p>
+                                    </div>
+                                    <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
+                                        <i data-lucide="activity" class="w-6 h-6 text-white"></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+                            <div class="px-6 py-4 border-b border-gray-200 bg-gray-50">
+                                <h3 class="text-lg font-semibold text-gray-900">Top Performing Agents</h3>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="w-full">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agent</th>
+                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Tokens</th>
+                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+                                            <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Calls</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200">
+                                        ${agentMetrics.map(([agent, data]) => `
+                                            <tr class="hover:bg-gray-50">
+                                                <td class="px-6 py-4 whitespace-nowrap">
+                                                    <div class="flex items-center">
+                                                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
+                                                            <i data-lucide="bot" class="w-4 h-4 text-blue-600"></i>
+                                                        </div>
+                                                        <div class="text-sm font-medium text-gray-900">${agent.replace('Agent', '')}</div>
+                                                    </div>
+                                                </td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">${(data.tokens || 0).toLocaleString()}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">$${(data.cost || 0).toFixed(4)}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-900">${(data.calls || 0).toLocaleString()}</td>
+                                            </tr>
+                                        `).join('')}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                lucide.createIcons();
+                showNotification('Metrics updated successfully', 'success');
+                
+            } catch (error) {
+                console.error('Failed to load metrics:', error);
+                
+                tokensMetric.textContent = '--';
+                costMetric.textContent = '--';
+                callsMetric.textContent = '--';
+                
+                showNotification('Failed to load metrics data', 'error');
+            }
+        }
+
+        // Example prompts
+        function setExamplePrompt(type) {
+            const promptEl = document.getElementById('agent-prompt');
+            const agentSelect = document.getElementById('agent-select');
+            
+            const examples = {
+                'title': {
+                    agent: 'BookTitleAgent',
+                    prompt: 'Generate a compelling title for a book about machine learning for beginners. The book should focus on practical applications and be accessible to non-technical readers.'
+                },
+                'outline': {
+                    agent: 'OutlineAgent',
+                    prompt: 'Create a detailed outline for a 10-chapter book about sustainable energy solutions. Include chapter titles, key topics, and learning objectives for each chapter.'
+                },
+                'chapter': {
+                    agent: 'ChapterWriterAgent',
+                    prompt: 'Write an introduction chapter for a book about artificial intelligence. The chapter should explain what AI is, its history, current applications, and future potential in about 2000 words.'
+                }
+            };
+            
+            const example = examples[type];
+            if (example) {
+                agentSelect.value = example.agent;
+                promptEl.value = example.prompt;
+                showNotification(`Example prompt loaded for ${example.agent}`, 'info');
+            }
+        }
+
+        // Retry connection
+        async function retryConnection() {
+            connectionRetries = 0;
+            showNotification('Retrying connection...', 'info');
+            const connected = await checkConnection();
+            
+            if (connected) {
+                await loadAgents();
+                await loadMetrics();
+            }
+        }
+
+        // Form event listeners
+        document.getElementById('generation-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                topic: document.getElementById('topic').value.trim(),
+                target_audience: document.getElementById('audience').value,
+                style: document.getElementById('style').value,
+                pages: parseInt(document.getElementById('pages').value) || 100,
+                language: document.getElementById('language').value
+            };
+            
+            if (!formData.topic) {
+                showNotification('Please enter a book topic', 'error');
+                return;
+            }
+            
+            if (formData.topic.length < 10) {
+                showNotification('Please provide a more detailed topic description (at least 10 characters)', 'error');
+                return;
+            }
+            
+            generateBook(formData);
+        });
+
+        // Agent selection handler
+        document.getElementById('agent-select').addEventListener('change', (e) => {
+            const agent = e.target.value;
+            const infoEl = document.getElementById('agent-info');
+            
+            if (agent) {
+                infoEl.innerHTML = `<p class="text-sm text-gray-600">${getAgentDescription(agent)}</p>`;
+                infoEl.classList.remove('hidden');
+            } else {
+                infoEl.classList.add('hidden');
+            }
+        });
+
+        // Initialize application
+        async function initializeApp() {
+            try {
+                // Show loading overlay
+                document.getElementById('loading-overlay').style.display = 'flex';
+                
+                // Check connection
+                const connected = await checkConnection();
+                
+                if (connected) {
+                    // Load initial data
+                    await Promise.all([
+                        loadAgents(),
+                        loadMetrics()
+                    ]);
+                    
+                    showNotification('BookLLM Dashboard initialized successfully!', 'success');
+                } else {
+                    showNotification('Failed to connect to BookLLM API. Some features may be limited.', 'error');
+                }
+                
+            } catch (error) {
+                console.error('Initialization error:', error);
+                showNotification('Failed to initialize dashboard. Please refresh the page.', 'error');
+            } finally {
+                // Hide loading overlay
+                setTimeout(() => {
+                    document.getElementById('loading-overlay').style.display = 'none';
+                }, 1000);
+            }
+        }
+
+        // Start the application
+        document.addEventListener('DOMContentLoaded', () => {
+            lucide.createIcons();
+            initializeApp();
+            
+            // Set up periodic health checks
+            setInterval(async () => {
+                if (connectionRetries === 0) {
+                    await checkConnection();
+                }
+            }, 30000); // Check every 30 seconds
+        });
+    </script>
+</body>
+</html>

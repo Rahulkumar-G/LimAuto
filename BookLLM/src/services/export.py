@@ -60,9 +60,10 @@ class ExportService:
             raise RuntimeError(f"Markdown export failed: {e}")
 
     async def export_pdf(self, state: BookState) -> Path:
-        """Export book as PDF using pandoc or fallback to FPDF"""
+        """Export book as professional PDF with headers, footers, and page numbers"""
         md_path = await self.export_markdown(state)
         pdf_path = md_path.with_suffix(".pdf")
+        latex_template_path = self._create_professional_latex_template(state)
 
         pandoc_available = shutil.which("pandoc") and shutil.which("xelatex")
 
@@ -75,20 +76,32 @@ class ExportService:
                         "-o",
                         str(pdf_path),
                         "--pdf-engine=xelatex",
+                        "--template", str(latex_template_path),
                         "--toc",
                         "--toc-depth=3",
                         "--highlight-style=tango",
-                        "--variable",
-                        "geometry:margin=1in",
-                        "--variable",
-                        f"title:{state.metadata.get('title', 'Untitled')}",
+                        "--variable", "geometry:margin=1in",
+                        "--variable", "geometry:top=1.5in",
+                        "--variable", "geometry:bottom=1.5in",
+                        "--variable", f"title:{state.metadata.get('title', 'Professional Book')}",
+                        "--variable", f"subtitle:{state.metadata.get('subtitle', '')}",
+                        "--variable", f"author:{state.metadata.get('author', 'Expert Author')}",
+                        "--variable", f"date:{datetime.now().strftime('%Y')}",
+                        "--variable", "book-title:" + state.metadata.get('title', 'Professional Book'),
+                        "--variable", "footer-text:" + state.metadata.get('title', 'Professional Book'),
+                        "--variable", "documentclass:book",
+                        "--variable", "classoption:openright",
+                        "--variable", "fontsize:11pt",
+                        "--variable", "linestretch:1.2",
                         "--top-level-division=chapter",
+                        "--number-sections",
+                        "--listings",
                     ],
                     check=True,
                 )
                 return pdf_path
             except subprocess.CalledProcessError as e:
-                raise RuntimeError(f"PDF export failed: {e}")
+                raise RuntimeError(f"Professional PDF export failed: {e}")
         else:
             # Simple fallback PDF generation using FPDF
             try:
@@ -246,3 +259,190 @@ class ExportService:
                 sections.append(f"- {term}")
 
         return "\n\n".join(sections)
+    
+    def _create_professional_latex_template(self, state: BookState) -> Path:
+        """Create professional LaTeX template with headers/footers and page numbers"""
+        template_path = self.output_dir / "professional_book_template.latex"
+        
+        book_title = state.metadata.get('title', 'Professional Book')
+        
+        latex_template = rf"""
+\documentclass[$if(fontsize)$$fontsize$,$endif$$if(lang)$$babel-lang$,$endif$$if(papersize)$$papersize$paper,$endif$$for(classoption)$$classoption$$sep$,$endfor$]{{$documentclass-default.latex$}}
+
+% Professional book packages
+\usepackage{{lmodern}}
+\usepackage{{amsmath,amsfonts,amssymb}}
+\usepackage{{ifxetex,ifluatex}}
+\usepackage{{fixltx2e}} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{{fontenc}}
+  \usepackage[utf8]{{inputenc}}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{{mathspec}}
+  \else
+    \usepackage{{fontspec}}
+  \fi
+  \defaultfontfeatures{{Ligatures=TeX,Scale=MatchLowercase}}
+\fi
+
+% Professional page layout
+\usepackage{{geometry}}
+\geometry{{
+  left=1.25in,
+  right=1.25in,
+  top=1.5in,
+  bottom=1.5in,
+  headheight=0.5in,
+  headsep=0.3in,
+  footskip=0.5in
+}}
+
+% Headers and footers
+\usepackage{{fancyhdr}}
+\pagestyle{{fancy}}
+\fancyhf{{}} % Clear all header and footer fields
+
+% Header configuration
+\fancyhead[LE]{{\textit{{\leftmark}}}} % Even pages: chapter title
+\fancyhead[RO]{{\textit{{\rightmark}}}} % Odd pages: section title
+
+% Footer configuration - Book title and page number
+\fancyfoot[LE]{{\textit{{{book_title}}} \hfill \thepage}} % Even pages
+\fancyfoot[RO]{{\thepage \hfill \textit{{{book_title}}}}} % Odd pages
+
+% Chapter pages style
+\fancypagestyle{{plain}}{{
+  \fancyhf{{}}
+  \fancyfoot[C]{{\textit{{{book_title}}} \hfill \thepage}}
+  \renewcommand{{\headrulewidth}}{{0pt}}
+  \renewcommand{{\footrulewidth}}{{0.4pt}}
+}}
+
+% Header/footer line thickness
+\renewcommand{{\headrulewidth}}{{0.4pt}}
+\renewcommand{{\footrulewidth}}{{0.4pt}}
+
+% Professional typography
+\usepackage{{microtype}}
+\usepackage{{setspace}}
+\setstretch{{1.15}}
+
+% Enhanced chapter formatting
+\usepackage{{titlesec}}
+\titleformat{{\chapter}}[display]
+  {{\normalfont\huge\bfseries}}
+  {{\chaptertitlename\ \thechapter}}
+  {{20pt}}
+  {{\Huge}}
+\titlespacing*{{\chapter}}{{0pt}}{{50pt}}{{40pt}}
+
+% Professional table of contents
+\usepackage{{tocloft}}
+\renewcommand{{\cftchapfont}}{{\bfseries}}
+\renewcommand{{\cfttoctitlefont}}{{\huge\bfseries}}
+\setlength{{\cftbeforetoctitleskip}}{{50pt}}
+\setlength{{\cftaftertoctitleskip}}{{40pt}}
+
+% Code highlighting
+\usepackage{{listings}}
+\usepackage{{xcolor}}
+\lstset{{
+  backgroundcolor=\color{{gray!10}},
+  basicstyle=\ttfamily\footnotesize,
+  breakatwhitespace=false,
+  breaklines=true,
+  captionpos=b,
+  commentstyle=\color{{green!60!black}},
+  escapeinside={{\\%*}}{{*)}},
+  extendedchars=true,
+  frame=single,
+  keepspaces=true,
+  keywordstyle=\color{{blue}},
+  language=Python,
+  morekeywords={{*,...}},
+  numbers=left,
+  numbersep=5pt,
+  numberstyle=\tiny\color{{gray}},
+  rulecolor=\color{{black}},
+  showspaces=false,
+  showstringspaces=false,
+  showtabs=false,
+  stepnumber=1,
+  stringstyle=\color{{red!80!black}},
+  tabsize=2,
+  title=\lstname
+}}
+
+% Professional hyperlinks
+\usepackage{{hyperref}}
+\hypersetup{{
+  colorlinks=true,
+  linkcolor=blue!50!black,
+  urlcolor=blue!50!black,
+  citecolor=blue!50!black,
+  pdftitle={{{book_title}}},
+  pdfauthor={{$author-meta$}},
+  pdfsubject={{Professional Technical Book}},
+  pdfkeywords={{Technical, Professional, Book}},
+  bookmarksnumbered=true,
+  bookmarksopen=true
+}}
+
+% Title page formatting
+\title{{$title$}}
+\author{{$author$}}
+\date{{$date$}}
+
+\begin{{document}}
+
+% Professional title page
+\begin{{titlepage}}
+\centering
+\vspace*{{2cm}}
+{{\Huge\bfseries $title$ \par}}
+\vspace{{1cm}}
+$if(subtitle)$
+{{\LARGE $subtitle$ \par}}
+\vspace{{1.5cm}}
+$endif$
+{{\Large\itshape $author$ \par}}
+\vfill
+{{\large Professional Publishing \par}}
+{{\large $date$ \par}}
+\end{{titlepage}}
+
+% Copyright page
+\newpage
+\thispagestyle{{empty}}
+\vspace*{{\fill}}
+\begin{{flushleft}}
+\textcopyright\ $date$\ $author$\\
+
+All rights reserved. No part of this publication may be reproduced, distributed, or transmitted in any form or by any means, including photocopying, recording, or other electronic or mechanical methods, without the prior written permission of the author.\\
+
+First Edition: $date$\\
+
+ISBN: 978-0-000-00000-0 (Paperback)\\
+ISBN: 978-0-000-00000-0 (eBook)\\
+
+Published by Professional Publishing\\
+www.professionalpublishing.com\\
+
+Printed in the United States of America
+\end{{flushleft}}
+\vspace*{{\fill}}
+
+% Table of contents
+\newpage
+\tableofcontents
+\newpage
+
+% Main content
+$body$
+
+\end{{document}}
+"""
+        
+        template_path.write_text(latex_template)
+        return template_path

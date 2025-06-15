@@ -1,7 +1,8 @@
 from pathlib import Path
 import json
 import yaml
-from flask import Flask, jsonify, request, Response
+from flask import Flask, jsonify, request, Response, send_from_directory, send_file
+from flask_cors import CORS
 
 import importlib
 from typing import Dict, Type
@@ -11,7 +12,8 @@ from .utils.metrics import TokenMetricsTracker
 from .agents.base import BaseAgent
 from .monitoring import status_updates, agent_start_times
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder=None)  # Disable built-in static folder
+CORS(app)
 
 # Default config path within the package
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config.yaml"
@@ -132,6 +134,42 @@ def agent_status_events():
             yield f"data: {json.dumps(payload)}\n\n"
 
     return Response(generate(), mimetype="text/event-stream")
+
+
+# Frontend serving routes - ORDER MATTERS! Static files must come before catch-all
+@app.route("/static/<path:filename>")
+def serve_static(filename):
+    """Serve static frontend files."""
+    try:
+        return send_from_directory("/app/frontend/build/static", filename)
+    except Exception as e:
+        app.logger.error(f"Error serving static file {filename}: {e}")
+        return jsonify({"error": f"Static file not found: {filename}"}), 404
+
+
+@app.route("/")
+def serve_frontend():
+    """Serve the main frontend application."""
+    frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend" / "build"
+    if frontend_dir.exists():
+        return send_file(frontend_dir / "index.html")
+    return jsonify({"error": "Frontend not built"}), 404
+
+
+# This must be LAST to avoid intercepting other routes
+@app.route("/<path:path>")
+def catch_all(path):
+    """Catch-all route for SPA routing - serve index.html for non-API routes."""
+    # Don't interfere with API routes or static files
+    if (path.startswith('api/') or path.startswith('events/') or 
+        path.startswith('static/') or path == 'health' or path == 'generate'):
+        return jsonify({"error": "Route not found"}), 404
+    
+    # For all other routes, serve the frontend
+    frontend_dir = Path(__file__).resolve().parent.parent.parent / "frontend" / "build"
+    if frontend_dir.exists():
+        return send_file(frontend_dir / "index.html")
+    return jsonify({"error": "Frontend not built"}), 404
 
 
 if __name__ == "__main__":
